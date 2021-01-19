@@ -1,6 +1,9 @@
 # 基于Vue3.x+TypeScript +Element Plus整合开发的在线教育平台后台管理系统（后台前端源码） 
 
 > 视频教程 , **[墨鱼课堂](http://java.goodym.cn/html/1610442125958.html)** 。
+>
+> QQ群交流：601212472
+
 
 
 ## 功能
