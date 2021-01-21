@@ -1,5 +1,15 @@
 <template>
 
+  <el-card class="box-card">
+    <el-container style="margin-bottom:20px;">
+      <el-alert
+          show-icon
+          title="友情提示:  课程分类只支持二级分类"
+          type="warning">
+      </el-alert>
+    </el-container>
+  </el-card>
+
     <screen-table
         class="indexlayout-main-conent"
         row-key="id"
@@ -18,13 +28,13 @@
                     <el-col :span="8">
                         <el-button v-permission="'sys:user:add'" type="primary" @click="() => setCreateFormVisible(true)">新增</el-button>
                     </el-col>
-                    <el-col :span="16" class="text-align-right">
+                  <!--  <el-col :span="16" class="text-align-right">
                         <el-input v-model="searchVal" style="width:200px;margin-left: 16px;" placeholder="请输入登录名/邮箱/手机号">
                             <template #suffix>
                                 <i class="el-input__icon el-icon-search cursor-pointer" @click="searchSubmit"></i>
                             </template>
                         </el-input>
-                    </el-col>
+                    </el-col>-->
             </el-row>
         </template>
 
@@ -39,34 +49,37 @@
         </el-table-column>
 
         <el-table-column
-            label="登录名"
-            prop="loginName"
-            width="80">
+            label="分类名称"
+            prop="name"
+            width="150">
         </el-table-column>
 
       <el-table-column
-          label="昵称"
-          prop="nickName"
-          width="100">
+          label="排序"
+          prop="sort"
+          width="80">
       </el-table-column>
 
       <el-table-column
-          label="邮箱"
-          prop="email">
+          label="阿里云视频点播分类ID"
+          prop="cateId">
       </el-table-column>
-
       <el-table-column
-          label="电话"
-          prop="tel">
+          label="层级"
+          prop="lev">
+        <template #default="{row}">
+          <el-tag v-if="row.lev===1" type="success">一级分类</el-tag>
+          <el-tag type="success" v-else-if="row.lev===2">二级分类</el-tag>
+          <el-tag type="danger" v-else>三级分类</el-tag>
+        </template>
       </el-table-column>
 
-        <el-table-column
-            label="备注"
-            prop="remarks">
-        </el-table-column>
+
+
+
 
         <el-table-column
-            label="会员状态"
+            label="状态"
             prop="delFlag">
             <template #default="{row}">
                 <el-tag v-if="!row.delFlag" type="success">正常</el-tag>
@@ -99,7 +112,7 @@
 
 
     <create-form
-        :roles="roleData"
+        :subjectTreeData="subjectTreeData"
         :visible="createFormVisible"
         :onCancel="() => setCreateFormVisible(false)"
         :onSubmitLoading="createSubmitLoading"
@@ -128,7 +141,7 @@ import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
 import {ResponseData} from "@/utils/request";
 import vPermission from '@/directives/permission';
-interface ListUserTablePageSetupData {
+interface ListSubjectTablePageSetupData {
     list: TableListItem[];
     pagination: PaginationConfig;
     loading: boolean;
@@ -148,12 +161,13 @@ interface ListUserTablePageSetupData {
     deleteTableData:  (id: number) => void;
     tabVal: string;
     searchVal: string;
-    roleData: object[];
+    subjectTreeData: object[];
     searchSubmit: () => Promise<void>;
+    getParentCategoryList: () => Promise<void>;
 }
 
 export default defineComponent({
-    name: 'ListUserTablePage',
+    name: 'ListSubjectTablePage',
     components: {
         ScreenTable,
         CreateForm,
@@ -162,24 +176,24 @@ export default defineComponent({
     directives: {
       permission: vPermission
     },
-    setup(): ListUserTablePageSetupData {
+    setup(): ListSubjectTablePageSetupData {
 
        // 定义搜索关键词
         const searchVal = ref<string>('');
-        const store = useStore<{ ListUserTable: ListStateType}>();
+        const store = useStore<{ ListSubjectTable: ListStateType}>();
 
 
         // 列表数据
-        const list = computed<TableListItem[]>(() => store.state.ListUserTable.tableData.list);
+        const list = computed<TableListItem[]>(() => store.state.ListSubjectTable.tableData.list);
 
         // 列表分页
-        const pagination = computed<PaginationConfig>(() => store.state.ListUserTable.tableData.pagination);
+        const pagination = computed<PaginationConfig>(() => store.state.ListSubjectTable.tableData.pagination);
 
         // 获取数据
         const loading = ref<boolean>(true);
         const getList = async (current: number): Promise<void> => {
             loading.value = true;
-            await store.dispatch('ListUserTable/queryTableData', {
+            await store.dispatch('ListSubjectTable/queryTableData', {
                 per: pagination.value.pageSize,
                 page: current,
                 s_key: searchVal.value
@@ -187,28 +201,15 @@ export default defineComponent({
             loading.value = false;
         }
 
-      // 角色穿梭框数据
-      const getAllRoles = async (rolesData: any[]) => {
-        const data: any = [];
-        for (const role of rolesData) {
-          data.push({
-            key: role.id,
-            label: `${ role.name }`
-          });
-
-        }
-        return data;
-      };
-        // 新增或修改获取角色数据
-        const roleData = ref<object[]>([]);
-        const getAllRolesData = async () => {
-          const res: object[] = await store.dispatch('ListUserTable/getAllRoles');
+        // 新增或修改获取课程分类树形数据
+        const subjectTreeData = ref<object[]>([]);
+        const getParentCategoryList = async () => {
+          const res: object[] = await store.dispatch('ListSubjectTable/getParentCategoryList');
+          console.info("获取课程分类树形数据：",res)
           if(res.length>0) {
-            roleData.value=await getAllRoles(res)
-
-            console.info("遍历后获取角色数据：",roleData.value)
+            subjectTreeData.value=res
           }else {
-            roleData.value = [];
+            subjectTreeData.value = [];
           }
 
         }
@@ -218,7 +219,7 @@ export default defineComponent({
         // 新增弹框 - visible
         const createFormVisible = ref<boolean>(false);
         const setCreateFormVisible = (val: boolean) => {
-          if(val)getAllRolesData()
+          if(val)getParentCategoryList()
           createFormVisible.value = val;
         };
         // 新增弹框 - 提交 loading
@@ -226,7 +227,7 @@ export default defineComponent({
         // 新增弹框 - 提交
         const createSubmit = async (values: Omit<TableListItem, 'id'>, resetFields: () => void) => {
             createSubmitLoading.value = true;
-            const response: ResponseData  = await store.dispatch('ListUserTable/createTableData',values);
+            const response: ResponseData  = await store.dispatch('ListSubjectTable/createTableData',values);
             console.info("保存用户数据返回值：",response)
             const { code ,success,message} = response;
             console.log('index页面组件接收的返回值success:', success);
@@ -246,19 +247,20 @@ export default defineComponent({
         const updateFormVisible = ref<boolean>(false);
         // 赋值表单
         const setUpdateFormVisible = (val: boolean) => {
+            console.info("弹出编辑框----------------:",val)
             updateFormVisible.value = val;
         }
         // 取消编辑表单
         const updataFormCancel = () => {
             setUpdateFormVisible(false);
-            store.commit('ListUserTable/setUpdateData',{});
+            store.commit('ListSubjectTable/setUpdateData',{});
         }
         // 编辑弹框 - 提交 loading
         const updateSubmitLoading = ref<boolean>(false);
         // 编辑弹框 - 提交
         const updateSubmit = async (values: TableListItem, resetFields: () => void) => {
             updateSubmitLoading.value = true;
-            const res: boolean = await store.dispatch('ListUserTable/updateTableData',values);
+            const res: boolean = await store.dispatch('ListSubjectTable/updateTableData',values);
             if(res === true) {
                 updataFormCancel();
                 ElMessage.success('编辑成功！');
@@ -268,16 +270,17 @@ export default defineComponent({
         }
 
         // 编辑弹框 data
-        const updateData = computed<Partial<TableListItem>>(() => store.state.ListUserTable.updateData);
+        const updateData = computed<Partial<TableListItem>>(() => store.state.ListSubjectTable.updateData);
 
         const detailUpdateLoading = ref<number[]>([]);
         const detailUpdateData = async (id: number) => {
             detailUpdateLoading.value = [id];
-            const res: boolean = await store.dispatch('ListUserTable/queryUpdateData',id);
+            const res: boolean = await store.dispatch('ListSubjectTable/queryUpdateData',id);
+            console.info("index页面获取需要更新的数据res：",res)
             if(res===true) {
                 setUpdateFormVisible(true);
             }
-            console.info("index页面获取用户所具有的角色数据：",updateData)
+
             detailUpdateLoading.value = [];
         }
 
@@ -293,7 +296,7 @@ export default defineComponent({
                 type: 'warning',
             }).then(async () => {
                 deleteLoading.value = [id];
-                const res: boolean = await store.dispatch('ListUserTable/deleteTableData',id);
+                const res: boolean = await store.dispatch('ListSubjectTable/deleteTableData',id);
                 if (res === true) {
                     ElMessage.success('删除成功！');
                     getList(pagination.value.current);
@@ -312,7 +315,6 @@ export default defineComponent({
         const searchSubmit = async () => {
           await getList(1);
         }
-
 
         onMounted(()=> {
            getList(1);
@@ -338,8 +340,9 @@ export default defineComponent({
             deleteTableData,
             tabVal: tabVal as unknown as string,
             searchVal: searchVal as unknown as string,
-            roleData:roleData as unknown as object[],
-            searchSubmit
+            subjectTreeData:subjectTreeData as unknown as object[],
+            searchSubmit,
+            getParentCategoryList
         }
 
     }

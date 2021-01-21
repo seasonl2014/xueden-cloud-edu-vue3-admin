@@ -4,7 +4,7 @@
       :close-on-press-escape="false"
       :before-close="onCancel"
       title="新增"
-      width="700px"
+      width="500px"
       :model-value="visible"
       @close="onCancel"
     >
@@ -13,38 +13,26 @@
             <el-button key="submit" type="primary" :loading="onSubmitLoading" @click="onFinish">提交</el-button>
         </template>
 
-        <el-form :inline="true" :model="modelRef" :rules="rulesRef" ref="formRef" label-width="80px">
-
-            <el-form-item label="登录名" prop="loginName" >
-                <el-input v-model="modelRef.loginName" placeholder="请输入登录名" />
+        <el-form :model="modelRef" :rules="rulesRef" ref="formRef" label-width="80px">
+            <el-form-item label="名称" prop="name" >
+                <el-input v-model="modelRef.name" placeholder="请输入名称" />
             </el-form-item>
-            <el-form-item label="昵称" prop="nickName" >
-                <el-input v-model="modelRef.nickName" placeholder="请输入昵称" />
+          <el-form-item label="父分类" prop="parentId">
+            <el-cascader
+                @change="selectParentChange"
+                @clear="clearParent"
+                :change-on-select="true"
+                :options="subjectTreeData"
+                clearable
+                filterable
+                style="width:100%"
+                :props="{ expandTrigger: 'hover', value: 'id',label: 'name',children: 'children',checkStrictly: true }"
+                v-model="pKeys"
+            ></el-cascader>
+          </el-form-item>
+            <el-form-item label="排序" prop="sort" >
+              <el-input-number v-model="modelRef.sort" :min="1" :max="10" label="排序"></el-input-number>
             </el-form-item>
-
-            <el-form-item label="手机号" prop="tel" >
-                <el-input v-model="modelRef.tel" placeholder="请输入手机号" />
-            </el-form-item>
-
-          <el-form-item label="邮箱" prop="email" >
-            <el-input v-model="modelRef.email" placeholder="请输入邮箱" />
-          </el-form-item>
-
-          <el-form-item label="是否启用" prop="email" >
-            <el-switch
-                v-model="modelRef.delFlag"
-                active-color="#13ce66"
-                inactive-color="#ff4949"
-                active-text="启用"
-                inactive-text="停用">
-            </el-switch>
-          </el-form-item>
-
-          <el-divider><i class="el-icon-mobile-phone"></i>选择角色</el-divider>
-
-          <el-form-item label="角色">
-            <el-transfer :titles="['待选角色', '已选角色']" v-model="modelRef.roleSets" :data="roles" />
-          </el-form-item>
 
         </el-form>
 
@@ -52,7 +40,7 @@
     </el-dialog>
 </template>
 <script lang="ts">
-import {defineComponent, onMounted, PropType, reactive, ref} from "vue";
+import { defineComponent, PropType, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { TableListItem } from "../data.d";
 import { ElForm, ElMessage } from "element-plus";
@@ -63,17 +51,17 @@ interface CreateFormSetupData {
     formRef: typeof ElForm;
     resetFields: () => void;
     onFinish: () => Promise<void>;
-
-
+    pKeys: number[];
+    selectParentChange: () => void;
 }
 
 export default defineComponent({
     name: 'CreateForm',
     props: {
-      roles: {
-        type: Object,
-        required: true
-      },
+      subjectTreeData: {
+          type: Object,
+          required: true
+        },
         visible: {
             type: Boolean,
             required: true
@@ -98,57 +86,30 @@ export default defineComponent({
 
         const { t } = useI18n();
 
-
+        // 父节点数组
+      const pKeys = ref<number[]>([]);
 
         // 表单值
         const modelRef = reactive<Omit<TableListItem, 'id'>>({
-          loginName: '',
-          nickName: '',
-          tel: '',
-          email: ''
+          name: '',
+          sort: '',
+          parentId: 0
         });
         // 表单验证
         const rulesRef = reactive({
-            loginName: [
-                  {
-                      required: true,
-                      validator: async (rule: any, value: string) => {
-                          if (value === '' || !value) {
-                              throw new Error('请输入名称');
-                          } else if (value.length > 15) {
-                              throw new Error('长度不能大于15个字');
-                          }
-                      }
-                  },
-              ],
-            nickName: [
-              {
-                required: true,
-                validator: async (rule: any, value: string) => {
-                  if (value === '' || !value) {
-                    throw new Error('请输入昵称');
-                  } else if (value.length > 15) {
-                    throw new Error('长度不能大于15个字');
-                  }
-                }
-              },
-            ],
-            tel: [
+            name: [
                 {
                     required: true,
                     validator: async (rule: any, value: string) => {
                         if (value === '' || !value) {
-                            throw new Error('请输入手机号');
-                        } else if (!/^1\d{10}$/.test(value)) {
-                            throw new Error('请输入正确的手机号');
+                            throw new Error('请输入名称');
+                        } else if (value.length > 15) {
+                            throw new Error('长度不能大于15个字');
                         }
-                    },
+                    }
                 },
             ],
-            email: [
-              { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-              { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
-            ]
+            sort: []
         });
         // form
         const formRef = ref<typeof ElForm>();
@@ -168,12 +129,25 @@ export default defineComponent({
                 ElMessage.warning(t('app.global.form.validatefields.catch'));
             }
         };
+      //父级分类中改变
+      const selectParentChange = ()=> {
+        const len = pKeys.value.length;
+        if (len > 0) {
+          modelRef.parentId = pKeys.value[len - 1];
+        }else{
+          modelRef.parentId=0;
+        }
+      }
+
+
         return {
             modelRef,
             rulesRef,
             formRef: formRef as unknown as typeof ElForm,
             resetFields,
-            onFinish
+            onFinish,
+            selectParentChange,
+             pKeys: pKeys as unknown as number[]
         }
 
     }

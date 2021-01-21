@@ -1,47 +1,47 @@
 import request from '@/utils/request';
 import { TableListQueryParams, TableListItem } from './data.d';
 
-// 查询用户列表数据
+// 查询课程分类列表数据
 export async function queryList(params?: TableListQueryParams): Promise<any> {
   return request({
-    url: '/system/user/list',
+    url: '/edu/subject/categoryTree',
     method: 'get',
     params,
   });
 }
 
-// 新增用户数据
+// 新增课程分类数据
 export async function createData(params: Omit<TableListItem, 'id'>): Promise<any> {
   return request({
-    url: 'system/user/addUser',
+    url: 'edu/subject/add',
     method: 'POST',
     data: params,
   });
 }
 
-// 更新用户数据
+// 更新课程分类数据
 export async function updateData(id: number, params: Omit<TableListItem, 'id'>): Promise<any> {
   return request({
-    url: `system/user/editUser/${id}`,
+    url: `edu/subject/update/${id}`,
     method: 'PUT',
     data: params,
   });
 }
 
-// 删除用户数据
+// 删除课程分类数据
 export async function removeData(id: number): Promise<any> {
   return request({
-    url: `system/user/delete/${id}`,
+    url: `edu/subject/delete/${id}`,
     method: 'delete'
   });
 }
 
-// 根据用户ID获取用户信息
+// 根据用户ID获取课程分类信息
 export async function detailData(id: number): Promise<any> {
-  return request({url: `system/user/getUserDetailById/${id}`});
+  return request({url: `edu/subject/edit/${id}`});
 }
 
-// 获取所有角色数据
-export async function getAllRoles(): Promise<any> {
-  return request({url: `/system/user/getAllRoles`});
+// 获取课程分类树形数据
+export async function getParentCategoryList(): Promise<any> {
+  return request({url: `/edu/subject/getParentEduSubjectTreeNode`});
 }

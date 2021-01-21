@@ -8,7 +8,7 @@ import {
   createData,
   detailData,
   updateData,
-  getAllRoles,
+  getParentCategoryList,
 } from './service';
 
 
@@ -29,7 +29,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
         createTableData: Action<StateType, StateType>;
         queryUpdateData: Action<StateType, StateType>;
         updateTableData: Action<StateType, StateType>;
-        getAllRoles: Action<StateType, StateType>;
+        getParentCategoryList: Action<StateType, StateType>;
     };
 }
 const initState: StateType = {
@@ -48,7 +48,7 @@ const initState: StateType = {
 
 const StoreModel: ModuleType = {
     namespaced: true,
-    name: 'ListUserTable',
+    name: 'ListSubjectTable',
     state: {
         ...initState
     },
@@ -69,7 +69,7 @@ const StoreModel: ModuleType = {
                 //console.info("用户管理数据：",data)
                 commit('setTableData',{
                     ...initState.tableData,
-                    list: data || [],
+                    list: data.rows || [],
                     pagination: {
                       ...initState.tableData.pagination,
                       current: payload.page,
@@ -90,8 +90,8 @@ const StoreModel: ModuleType = {
                 return false;
             }
         },
-        // 新增用户数据
-        async createTableData({ commit }, payload: Pick<TableListItem, "loginName" | "nickName" | "tel" | "email"> ) {
+        // 新增课程分类数据
+        async createTableData({ commit }, payload: Pick<TableListItem, "sort" | "name" > ) {
             try {
                 const response: ResponseData = await createData(payload);
                 return response;
@@ -104,30 +104,15 @@ const StoreModel: ModuleType = {
             try {
                 const response: ResponseData = await detailData(payload);
                 const { data } = response;
-                // 封装所有角色数据
-                const roleList: any = [];
-                for (const role of data.roleList) {
-                    roleList.push({
-                        key: role.id,
-                        label: `${ role.name }`
-                    });
-                }
 
-                // 封装用户所具有的角色数据
-                const roleSets: any = [];
-                for (const role of data.user.roleLists) {
-                    roleSets.push(role.id);
-                }
+
 
                 /*console.info("封装后的角色数据：",roleList)
                 console.info("获取用户所具有的角色数据：",data.roleIds)*/
 
                 commit('setUpdateData',{
                     ...initState.updateData,
-                    ...data.user,
-                    roleList,
-                    roleSets
-
+                    ...data
                 });
                 return true;
             } catch (error) {
@@ -144,10 +129,10 @@ const StoreModel: ModuleType = {
                 return false;
             }
         },
-        // 获取所有角色
-        async getAllRoles({ commit }) {
+        // 获取课程分类树形数据
+        async getParentCategoryList({ commit }) {
             try {
-                const response: ResponseData = await getAllRoles();
+                const response: ResponseData = await getParentCategoryList();
                 const { data } = response;
                 return data;
             } catch (error) {

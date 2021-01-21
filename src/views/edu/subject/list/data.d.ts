@@ -13,10 +13,10 @@ export interface PaginationConfig {
 
 export interface TableListItem {
   id: number;
-  loginName: string;
-  nickName: string;
-  tel: string;
-  email: string;
+  sort: string;
+  name: string;
+  parentId?: number;
+  cateId?: number;
   delFlag?: boolean;
   roleSets?: string[];
   roleList?: string[];
