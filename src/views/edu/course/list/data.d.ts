@@ -22,7 +22,7 @@ export interface TableListItem {
   difficulty?: number;
   price?: number;
   lessonNum?: number;
-  parentId?: number;
+  subjectParentId?: number;
   cateId?: number;
   delFlag?: boolean;
   roleSets?: string[];

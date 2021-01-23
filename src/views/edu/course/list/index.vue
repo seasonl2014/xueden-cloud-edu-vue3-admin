@@ -3,7 +3,7 @@
   <el-row :gutter="15">
 
     <!--课程分类-->
-    <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="5">
+    <el-col :xs="24" :sm="24" :md="4" :lg="4" :xl="3">
       <el-card class="box-card" shadow="never">
           <template #header>
             <el-tooltip class="item" effect="dark" content="选择指定课程分类" placement="top">
@@ -12,7 +12,7 @@
           </template>
           <el-tree
             :ref="setCourseTypeRef"
-            :data="[]"
+            :data="subjectTreeData"
             :props="{children: 'children',label: 'name'}"
             check-strictly
             accordion
@@ -149,6 +149,7 @@
 
         <!--添加弹出框-->
         <create-form
+            :headerToken="headerToken"
             :subjectTreeData="subjectTreeData"
             :teachers="teachers"
             :visible="createFormVisible"
@@ -181,6 +182,7 @@ import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
 import {ResponseData} from "@/utils/request";
 import vPermission from '@/directives/permission';
+import {getToken} from "@/utils/localToken";
 interface ListCourseTablePageSetupData {
     list: TableListItem[];
     pagination: PaginationConfig;
@@ -207,6 +209,7 @@ interface ListCourseTablePageSetupData {
     getParentCategoryList: () => Promise<void>;
     getAllTeacherList: () => Promise<void>;
     setCourseTypeRef: (val: object) => void;
+    headerToken: string | null;
 }
 
 export default defineComponent({
@@ -250,11 +253,18 @@ export default defineComponent({
             loading.value = false;
         }
 
+      // 新增或修改获取token数据
+      const headerToken = ref<string|null>();
+      const getHeaderToken = async () => {
+        const token = await getToken();
+        headerToken.value = 'Bearer '+token;
+      }
+
         // 新增或修改获取课程分类树形数据
         const subjectTreeData = ref<object[]>([]);
         const getParentCategoryList = async () => {
           const res: object[] = await store.dispatch('ListSubjectTable/getParentCategoryList');
-          console.info("获取课程分类树形数据：",res)
+          // console.info("获取课程分类树形数据：",res)
           if(res.length>0) {
             subjectTreeData.value=res
           }else {
@@ -278,8 +288,8 @@ export default defineComponent({
         // 新增弹框 - visible
         const createFormVisible = ref<boolean>(false);
         const setCreateFormVisible = (val: boolean) => {
-          if(val)getParentCategoryList()
           getAllTeacherList()
+          getHeaderToken()
           createFormVisible.value = val;
         };
         // 新增弹框 - 提交 loading
@@ -307,7 +317,6 @@ export default defineComponent({
         const updateFormVisible = ref<boolean>(false);
         // 赋值表单
         const setUpdateFormVisible = (val: boolean) => {
-            console.info("弹出编辑框----------------:",val)
             updateFormVisible.value = val;
         }
         // 取消编辑表单
@@ -324,7 +333,7 @@ export default defineComponent({
             if(res === true) {
                 updataFormCancel();
                 ElMessage.success('编辑成功！');
-                getList(pagination.value.current);
+                await getList(pagination.value.current);
             }
             updateSubmitLoading.value = false;
         }
@@ -359,7 +368,7 @@ export default defineComponent({
                 const res: boolean = await store.dispatch('ListCourseTable/deleteTableData',id);
                 if (res === true) {
                     ElMessage.success('删除成功！');
-                    getList(pagination.value.current);
+                    await getList(pagination.value.current);
                 }
                 deleteLoading.value = [];
             }).catch((error: any) =>{
@@ -374,10 +383,12 @@ export default defineComponent({
         // 搜索
         const searchSubmit = async () => {
           await getList(1);
+
         }
 
         onMounted(()=> {
            getList(1);
+           getParentCategoryList();
         })
 
         return {
@@ -405,7 +416,9 @@ export default defineComponent({
             searchSubmit,
             getParentCategoryList,
             setCourseTypeRef,
-            getAllTeacherList
+            getAllTeacherList,
+            headerToken:headerToken as unknown as string,
+
         }
 
     }

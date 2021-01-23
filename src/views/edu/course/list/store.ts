@@ -61,19 +61,19 @@ const StoreModel: ModuleType = {
         },
     },
     actions: {
-        // 获取用户列表数据
+        // 获取课程列表数据
         async queryTableData({ commit }, payload: TableListQueryParams ) {
             try {
                 const response: ResponseData = await queryList(payload);
-                const { data } = response;
-                //console.info("用户管理数据：",data)
+                const { data,count } = response;
+                //console.info("课程管理数据：",data)
                 commit('setTableData',{
                     ...initState.tableData,
                     list: data || [],
                     pagination: {
                       ...initState.tableData.pagination,
                       current: payload.page,
-                      total: data.count || 0,
+                      total: count || 0,
                     },
                 });
                 return true;
@@ -81,7 +81,7 @@ const StoreModel: ModuleType = {
                 return false;
             }
         },
-        // 删除用户数据
+        // 删除课程数据
         async deleteTableData({ commit }, payload: number ) {
             try {
                 await removeData(payload);
@@ -99,7 +99,7 @@ const StoreModel: ModuleType = {
                 return null;
             }
         },
-        // 获取需要更新的用户数据
+        // 获取需要更新的课程数据
         async queryUpdateData({ commit }, payload: number ) {
             try {
                 const response: ResponseData = await detailData(payload);
@@ -108,7 +108,7 @@ const StoreModel: ModuleType = {
 
 
                 /*console.info("封装后的角色数据：",roleList)
-                console.info("获取用户所具有的角色数据：",data.roleIds)*/
+                console.info("获取课程所具有的角色数据：",data.roleIds)*/
 
                 commit('setUpdateData',{
                     ...initState.updateData,
@@ -119,7 +119,7 @@ const StoreModel: ModuleType = {
                 return false;
             }
         },
-        // 更新用户数据
+        // 更新课程数据
         async updateTableData({ commit }, payload: TableListItem ) {
             try {
                 const { id, ...params } = payload;

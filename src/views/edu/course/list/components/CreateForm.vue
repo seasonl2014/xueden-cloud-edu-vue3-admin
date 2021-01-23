@@ -4,7 +4,7 @@
       :close-on-press-escape="false"
       :before-close="onCancel"
       title="新增"
-      width="700px"
+      width="800px"
       :model-value="visible"
       @close="onCancel"
     >
@@ -15,6 +15,7 @@
 
       <el-steps :active="1" process-status="wait" align-center style="margin-bottom: 40px;">
         <el-step title="填写课程基本信息"/>
+        <el-step title="完善课程详情"/>
         <el-step title="创建课程大纲"/>
         <el-step title="提交审核"/>
       </el-steps>
@@ -80,6 +81,7 @@
           <el-form-item label="课程封面" prop="cover">
             <!-- 图片上传部分 -->
             <el-upload
+                :headers="{Authorization:headerToken}"
                 :action="uploadApi"
                 :class="{ disabled: uploadDisabled }"
                 list-type="picture-card"
@@ -88,7 +90,6 @@
                 :on-remove="handleRemove"
                 accept="image/*"
                 :on-success="handleSuccess"
-                :headers="headerObject"
                 ref="upload"
                 :on-preview="handlePictureCardPreview"
             >
@@ -99,13 +100,13 @@
           <el-row>
             <el-col :span="12">
               <el-form-item label="价格" prop="sort" >
-                <el-input-number v-model="modelRef.sort" :min="1" :max="10" label="排序"></el-input-number>
+                <el-input-number v-model="modelRef.price" :min="0" :max="500" label="价格"></el-input-number>
               </el-form-item>
             </el-col>
 
             <el-col :span="12">
               <el-form-item label="课时" prop="sort" >
-                <el-input-number v-model="modelRef.sort" :min="1" :max="10" label="排序"></el-input-number>
+                <el-input-number v-model="modelRef.lessonNum" :min="1" :max="1000" label="课时"></el-input-number>
               </el-form-item>
             </el-col>
           </el-row>
@@ -129,11 +130,17 @@ interface CreateFormSetupData {
     onFinish: () => Promise<void>;
     pKeys: number[];
     selectParentChange: () => void;
+    uploadApi: string;
+    handleSuccess: (response: any, file: any, fileList: any) => void;
 }
 
 export default defineComponent({
     name: 'CreateForm',
     props: {
+      headerToken: {
+        type: String,
+        required: true
+      },
       subjectTreeData: {
           type: Object,
           required: true
@@ -172,12 +179,14 @@ export default defineComponent({
         // 表单值
         const modelRef = reactive<Omit<TableListItem, 'id'>>({
           title: '',
-          shortTitle: ''
+          shortTitle: '',
+          price: 0,
+          lessonNum: 0
 
         });
         // 表单验证
         const rulesRef = reactive({
-            name: [
+          title: [
                 {
                     required: true,
                     validator: async (rule: any, value: string) => {
@@ -189,7 +198,24 @@ export default defineComponent({
                     }
                 },
             ],
-            sort: []
+          shortTitle: [
+            {
+              required: true,
+              validator: async (rule: any, value: string) => {
+                if (value === '' || !value) {
+                  throw new Error('请输入名称');
+                } else if (value.length > 15) {
+                  throw new Error('长度不能大于15个字');
+                }
+              }
+            },
+          ],
+          teacherId: [{required: true}],
+          subjectId: [{required: true}],
+          courseType: [{required: true}],
+          difficulty: [{required: true}],
+          lessonNum: [{required: true}],
+          price: [{required: true}]
         });
         // form
         const formRef = ref<typeof ElForm>();
@@ -213,12 +239,17 @@ export default defineComponent({
       const selectParentChange = ()=> {
         const len = pKeys.value.length;
         if (len > 0) {
-          modelRef.parentId = pKeys.value[len - 1];
+          modelRef.subjectParentId = pKeys.value[0];
+          modelRef.subjectId = pKeys.value[len - 1];
         }else{
-          modelRef.parentId=0;
+          modelRef.subjectId=0;
+          modelRef.subjectParentId=0;
         }
       }
-
+      const handleSuccess = (response: any, file: any, fileList: any) =>{
+        // console.info("上传图片返回信息",response)
+        modelRef.cover = response.message;
+      }
 
         return {
             modelRef,
@@ -227,7 +258,9 @@ export default defineComponent({
             resetFields,
             onFinish,
             selectParentChange,
-             pKeys: pKeys as unknown as number[]
+            handleSuccess,
+             pKeys: pKeys as unknown as number[],
+             uploadApi: process.env.VUE_APP_APIHOST+'edu/oss/upload',
         }
 
     }
