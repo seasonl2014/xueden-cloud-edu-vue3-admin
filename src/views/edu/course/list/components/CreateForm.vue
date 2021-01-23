@@ -4,35 +4,111 @@
       :close-on-press-escape="false"
       :before-close="onCancel"
       title="新增"
-      width="500px"
+      width="700px"
       :model-value="visible"
       @close="onCancel"
     >
         <template #footer>
             <el-button key="back" @click="() => onCancel()">取消</el-button>
-            <el-button key="submit" type="primary" :loading="onSubmitLoading" @click="onFinish">提交</el-button>
+            <el-button key="submit" type="primary" :loading="onSubmitLoading" @click="onFinish">保存并下一步</el-button>
         </template>
 
+      <el-steps :active="1" process-status="wait" align-center style="margin-bottom: 40px;">
+        <el-step title="填写课程基本信息"/>
+        <el-step title="创建课程大纲"/>
+        <el-step title="提交审核"/>
+      </el-steps>
+
         <el-form :model="modelRef" :rules="rulesRef" ref="formRef" label-width="80px">
-            <el-form-item label="名称" prop="name" >
-                <el-input v-model="modelRef.name" placeholder="请输入名称" />
+            <el-form-item label="长标题" prop="title" >
+                <el-input v-model="modelRef.title" placeholder="课程长标题" />
             </el-form-item>
-          <el-form-item label="父分类" prop="parentId">
-            <el-cascader
-                @change="selectParentChange"
-                @clear="clearParent"
-                :change-on-select="true"
-                :options="subjectTreeData"
-                clearable
-                filterable
-                style="width:100%"
-                :props="{ expandTrigger: 'hover', value: 'id',label: 'name',children: 'children',checkStrictly: true }"
-                v-model="pKeys"
-            ></el-cascader>
+
+          <el-form-item label="短标题" prop="shortTitle" >
+            <el-input v-model="modelRef.shortTitle" placeholder="课程短标题" />
           </el-form-item>
-            <el-form-item label="排序" prop="sort" >
-              <el-input-number v-model="modelRef.sort" :min="1" :max="10" label="排序"></el-input-number>
-            </el-form-item>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="课程分类" prop="subjectId">
+                <el-cascader
+                    @change="selectParentChange"
+                    :change-on-select="true"
+                    :options="subjectTreeData"
+                    filterable
+                    style="width:100%"
+                    :props="{ expandTrigger: 'hover', value: 'id',label: 'name',children: 'children' }"
+                    v-model="pKeys"
+                ></el-cascader>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+                <el-form-item label="课程类型">
+                  <el-select v-model="modelRef.courseType" placeholder="请选择课程类型">
+                    <el-option label="新手入门" value="0"></el-option>
+                    <el-option label="免费好课" value="1"></el-option>
+                    <el-option label="技能提高" value="2"></el-option>
+                    <el-option label="实战开发" value="3"></el-option>
+                  </el-select>
+                </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="选择讲师">
+                <el-select v-model="modelRef.teacherId" placeholder="请选择讲师">
+                  <el-option
+                      v-for="teacher in teachers"
+                      :key="teacher.id"
+                      :label="teacher.name"
+                      :value="teacher.id"
+                  ></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+                <el-form-item label="课程难度">
+                  <el-select v-model="modelRef.difficulty" placeholder="请选择课程难度">
+                    <el-option label="入门" value="0"></el-option>
+                    <el-option label="初级" value="1"></el-option>
+                    <el-option label="中级" value="2"></el-option>
+                    <el-option label="高级" value="3"></el-option>
+                  </el-select>
+                </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-form-item label="课程封面" prop="cover">
+            <!-- 图片上传部分 -->
+            <el-upload
+                :action="uploadApi"
+                :class="{ disabled: uploadDisabled }"
+                list-type="picture-card"
+                :limit="limitcount"
+                :on-change="handleChange"
+                :on-remove="handleRemove"
+                accept="image/*"
+                :on-success="handleSuccess"
+                :headers="headerObject"
+                ref="upload"
+                :on-preview="handlePictureCardPreview"
+            >
+              <i class="el-icon-plus"></i>
+            </el-upload>
+          </el-form-item>
+
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="价格" prop="sort" >
+                <el-input-number v-model="modelRef.sort" :min="1" :max="10" label="排序"></el-input-number>
+              </el-form-item>
+            </el-col>
+
+            <el-col :span="12">
+              <el-form-item label="课时" prop="sort" >
+                <el-input-number v-model="modelRef.sort" :min="1" :max="10" label="排序"></el-input-number>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
         </el-form>
 
@@ -60,6 +136,10 @@ export default defineComponent({
     props: {
       subjectTreeData: {
           type: Object,
+          required: true
+        },
+        teachers: {
+          type: Array,
           required: true
         },
         visible: {
@@ -91,9 +171,9 @@ export default defineComponent({
 
         // 表单值
         const modelRef = reactive<Omit<TableListItem, 'id'>>({
-          name: '',
-          sort: '',
-          parentId: 0
+          title: '',
+          shortTitle: ''
+
         });
         // 表单验证
         const rulesRef = reactive({

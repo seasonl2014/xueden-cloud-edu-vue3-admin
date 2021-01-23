@@ -74,10 +74,10 @@ export default defineComponent({
         // 表单值
         const modelRef = reactive<TableListItem>({
             id: props.values.id || 0,
-            name: props.values.name || '',
-            sort: props.values.sort || '',
-            parentId: props.values.parentId || 0,
-            cateId: props.values.cateId || 0,
+            title: props.values.title || '',
+            shortTitle: props.values.shortTitle || '',
+            courseType: props.values.courseType || 0,
+            difficulty: props.values.difficulty || 0,
         });
         // 表单验证
         const rulesRef = reactive({

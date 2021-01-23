@@ -45,3 +45,8 @@ export async function detailData(id: number): Promise<any> {
 export async function getAllRoles(): Promise<any> {
   return request({url: `/system/user/getAllRoles`});
 }
+
+// 获取所有讲师数据
+export async function getAllTeacherList(): Promise<any> {
+  return request({url: `/edu/teacher/all`});
+}

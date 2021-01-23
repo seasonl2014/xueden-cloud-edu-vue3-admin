@@ -84,8 +84,10 @@ export default defineComponent({
 
         // 表单值
         const modelRef = reactive<Omit<TableListItem, 'id'>>({
-          name: '',
-          sort: ''
+          title: '',
+          shortTitle: '',
+          courseType: 0,
+          difficulty: 0
         });
 
 

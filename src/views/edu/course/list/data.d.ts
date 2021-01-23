@@ -13,8 +13,15 @@ export interface PaginationConfig {
 
 export interface TableListItem {
   id: number;
-  sort: string;
-  name: string;
+  cover?: string;
+  teacherId?: number;
+  subjectId?: number;
+  title: string;
+  shortTitle: string;
+  courseType?: number;
+  difficulty?: number;
+  price?: number;
+  lessonNum?: number;
   parentId?: number;
   cateId?: number;
   delFlag?: boolean;

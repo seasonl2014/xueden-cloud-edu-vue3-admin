@@ -108,9 +108,11 @@
               width="100"
               align="center">
             <template #default="{row}">
-              <a :href="row.href">
-                <el-tag type="success"> {{ row.buyCount }}人</el-tag>
-              </a>
+              <el-tooltip class="item" effect="dark" content="付款购买课程的用户" placement="top">
+                <a :href="row.href">
+                  <el-tag type="success"> {{ row.buyCount }}人</el-tag>
+                </a>
+              </el-tooltip>
             </template>
           </el-table-column>
 
@@ -120,7 +122,9 @@
                 width="100"
                 align="center">
                 <template #default="{row}">
+                  <el-tooltip class="item" effect="dark" content="加入VIP免费观看课程的用户" placement="top">
                     <el-tag  type="warning">{{ row.vipCount }}人</el-tag>
+                  </el-tooltip>
                 </template>
             </el-table-column>
 
@@ -143,14 +147,17 @@
 
         </screen-table>
 
+        <!--添加弹出框-->
         <create-form
             :subjectTreeData="subjectTreeData"
+            :teachers="teachers"
             :visible="createFormVisible"
             :onCancel="() => setCreateFormVisible(false)"
             :onSubmitLoading="createSubmitLoading"
             :onSubmit="createSubmit"
         />
 
+        <!--编辑弹出框-->
         <update-form
             v-if="updateFormVisible===true"
             :visible="updateFormVisible"
@@ -195,8 +202,10 @@ interface ListCourseTablePageSetupData {
     tabVal: string;
     searchVal: string;
     subjectTreeData: object[];
+    teachers: object[];
     searchSubmit: () => Promise<void>;
     getParentCategoryList: () => Promise<void>;
+    getAllTeacherList: () => Promise<void>;
     setCourseTypeRef: (val: object) => void;
 }
 
@@ -254,12 +263,23 @@ export default defineComponent({
 
         }
 
-
+        // 新增或修改获取讲师列表数据
+      const teachers = ref<object[]>([]);
+      const getAllTeacherList = async ()=>{
+        const res: object[] = await store.dispatch('ListTeacherTable/getAllTeacherList');
+        console.info("获取讲师数据：",res)
+        if(res.length>0) {
+          teachers.value=res
+        }else {
+          teachers.value = [];
+        }
+      }
 
         // 新增弹框 - visible
         const createFormVisible = ref<boolean>(false);
         const setCreateFormVisible = (val: boolean) => {
           if(val)getParentCategoryList()
+          getAllTeacherList()
           createFormVisible.value = val;
         };
         // 新增弹框 - 提交 loading
@@ -381,9 +401,11 @@ export default defineComponent({
             tabVal: tabVal as unknown as string,
             searchVal: searchVal as unknown as string,
             subjectTreeData:subjectTreeData as unknown as object[],
+            teachers:teachers as unknown as object[],
             searchSubmit,
             getParentCategoryList,
-            setCourseTypeRef
+            setCourseTypeRef,
+            getAllTeacherList
         }
 
     }

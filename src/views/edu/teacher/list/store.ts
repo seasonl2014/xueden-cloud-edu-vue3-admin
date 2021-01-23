@@ -9,6 +9,7 @@ import {
   detailData,
   updateData,
   getAllRoles,
+  getAllTeacherList,
 } from './service';
 
 
@@ -30,6 +31,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
         queryUpdateData: Action<StateType, StateType>;
         updateTableData: Action<StateType, StateType>;
         getAllRoles: Action<StateType, StateType>;
+        getAllTeacherList: Action<StateType, StateType>;
     };
 }
 const initState: StateType = {
@@ -128,6 +130,15 @@ const StoreModel: ModuleType = {
         async getAllRoles({ commit }) {
             try {
                 const response: ResponseData = await getAllRoles();
+                const { data } = response;
+                return data;
+            } catch (error) {
+                return null;
+            }
+        },
+        async getAllTeacherList({ commit }){
+            try {
+                const response: ResponseData = await getAllTeacherList();
                 const { data } = response;
                 return data;
             } catch (error) {

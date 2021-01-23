@@ -91,7 +91,7 @@ const StoreModel: ModuleType = {
             }
         },
         // 新增课程分类数据
-        async createTableData({ commit }, payload: Pick<TableListItem, "sort" | "name" > ) {
+        async createTableData({ commit }, payload: Pick<TableListItem, "title" | "shortTitle" | "courseType" | "difficulty" > ) {
             try {
                 const response: ResponseData = await createData(payload);
                 return response;
