@@ -10,10 +10,10 @@ export async function queryList(params?: TableListQueryParams): Promise<any> {
   });
 }
 
-// 新增用户数据
+// 新增讲师数据
 export async function createData(params: Omit<TableListItem, 'id'>): Promise<any> {
   return request({
-    url: 'system/user/addUser',
+    url: '/edu/teacher/add',
     method: 'POST',
     data: params,
   });
@@ -22,7 +22,7 @@ export async function createData(params: Omit<TableListItem, 'id'>): Promise<any
 // 更新用户数据
 export async function updateData(id: number, params: Omit<TableListItem, 'id'>): Promise<any> {
   return request({
-    url: `system/user/editUser/${id}`,
+    url: `/edu/teacher/update/${id}`,
     method: 'PUT',
     data: params,
   });
@@ -31,14 +31,14 @@ export async function updateData(id: number, params: Omit<TableListItem, 'id'>):
 // 删除用户数据
 export async function removeData(id: number): Promise<any> {
   return request({
-    url: `system/user/delete/${id}`,
+    url: `/edu/teacher/delete/${id}`,
     method: 'delete'
   });
 }
 
-// 根据用户ID获取用户信息
+// 根据用户ID获取需要编辑的讲师信息
 export async function detailData(id: number): Promise<any> {
-  return request({url: `system/user/getUserDetailById/${id}`});
+  return request({url: `/edu/teacher/edit/${id}`});
 }
 
 // 获取所有角色数据

@@ -99,35 +99,15 @@ const StoreModel: ModuleType = {
                 return null;
             }
         },
-        // 获取需要更新的用户数据
+        // 获取需要更新的讲师数据
         async queryUpdateData({ commit }, payload: number ) {
             try {
                 const response: ResponseData = await detailData(payload);
                 const { data } = response;
-                // 封装所有角色数据
-                const roleList: any = [];
-                for (const role of data.roleList) {
-                    roleList.push({
-                        key: role.id,
-                        label: `${ role.name }`
-                    });
-                }
-
-                // 封装用户所具有的角色数据
-                const roleSets: any = [];
-                for (const role of data.user.roleLists) {
-                    roleSets.push(role.id);
-                }
-
-                /*console.info("封装后的角色数据：",roleList)
-                console.info("获取用户所具有的角色数据：",data.roleIds)*/
-
+                // console.info("获取需要修改的讲师数据1：",data)
                 commit('setUpdateData',{
                     ...initState.updateData,
-                    ...data.user,
-                    roleList,
-                    roleSets
-
+                    ...data
                 });
                 return true;
             } catch (error) {

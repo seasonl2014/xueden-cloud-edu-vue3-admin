@@ -13,39 +13,48 @@
             <el-button key="submit" type="primary" :loading="onSubmitLoading" @click="onFinish">提交</el-button>
         </template>
 
-        <el-form :inline="true" :model="modelRef" :rules="rulesRef" ref="formRef" label-width="80px">
-          <el-form-item label="登录名" prop="loginName" >
-            <el-input v-model="modelRef.loginName" placeholder="请输入登录名" />
-          </el-form-item>
-          <el-form-item label="昵称" prop="nickName" >
-            <el-input v-model="modelRef.nickName" placeholder="请输入昵称" />
-          </el-form-item>
+      <el-form :inline="true" :model="modelRef" :rules="rulesRef" ref="formRef" label-width="80px">
 
-          <el-form-item label="手机号" prop="tel" >
-            <el-input v-model="modelRef.tel" placeholder="请输入手机号" />
-          </el-form-item>
+        <el-form-item label="讲师名称" prop="name" >
+          <el-input v-model="modelRef.name" placeholder="请输入讲师名称" />
+        </el-form-item>
+        <el-form-item label="讲师排序" prop="sort" >
+          <el-input-number v-model="modelRef.sort" controls-position="right" :min="0" placeholder="请输入排序"/>
+        </el-form-item>
 
-          <el-form-item label="邮箱" prop="email" >
-            <el-input v-model="modelRef.email" placeholder="请输入邮箱" />
-          </el-form-item>
+        <el-form-item label="讲师头衔">
+          <el-select v-model="modelRef.level" clearable placeholder="请选择">
+            <el-option :value="1" label="高级讲师"/>
+            <el-option :value="2" label="首席讲师"/>
+          </el-select>
+        </el-form-item>
 
-          <el-form-item label="是否启用" prop="email" >
-            <el-switch
-                v-model="modelRef.delFlag"
-                active-color="#13ce66"
-                inactive-color="#ff4949"
-                active-text="启用"
-                inactive-text="停用">
-            </el-switch>
-          </el-form-item>
+        <el-form-item label="讲师资历" prop="intro" >
+          <el-input type="textarea" v-model="modelRef.intro" placeholder="请输入讲师资历" style="width: 500px;" />
+        </el-form-item>
 
-          <el-divider><i class="el-icon-mobile-phone"></i>选择角色</el-divider>
+        <el-form-item label="讲师简介">
+          <el-input v-model="modelRef.remarks" :rows="10" type="textarea" style="width: 500px;"/>
+        </el-form-item>
 
-          <el-form-item label="角色">
-            <el-transfer :titles="['待选角色', '已选角色']" v-model="modelRef.roleSets" :data="modelRef.roleList" />
-          </el-form-item>
+        <!-- 讲师头像：TODO -->
+        <el-form-item label="讲师头像">
 
-        </el-form>
+          <el-upload
+              class="avatar-uploader"
+              :headers="{Authorization:headerToken}"
+              :action="BASE_API+'edu/oss/upload'"
+              :show-file-list="false"
+              :on-success="handleAvatarSuccess"
+          >
+            <img v-if="modelRef.avatar" :src="modelRef.avatar" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+
+        </el-form-item>
+
+
+      </el-form>
 
 
     </el-dialog>
@@ -63,11 +72,18 @@ interface UpdateFormSetupData {
     formRef: typeof ElForm;
     resetFields: () => void;
     onFinish: () => Promise<void>;
+    BASE_API: string| undefined;
+    handleAvatarSuccess: (res: any, file: any) => void;
+
 }
 
 export default defineComponent({
     name: 'UpdateForm',
     props: {
+        headerToken: {
+          type: String,
+          required: true
+        },
         visible: {
             type: Boolean,
             required: true
@@ -103,8 +119,8 @@ export default defineComponent({
             name: props.values.name || '',
             sort: props.values.sort || 0,
             intro: props.values.intro || '',
-            roleList: props.values.roleList || [],
-            roleSets: props.values.roleSets || []
+            remarks: props.values.remarks || '',
+            avatar: props.values.avatar || ''
         });
         // 表单验证
         const rulesRef = reactive({
@@ -137,6 +153,12 @@ export default defineComponent({
 
         // form
         const formRef = ref<typeof ElForm>();
+
+      const  handleAvatarSuccess = (res: any, file: any) =>{
+        console.info("res值：",res.message)
+        modelRef.avatar = res.message
+      }
+
         // 重置
         const resetFields = () => {
             formRef.value?.resetFields();
@@ -155,13 +177,40 @@ export default defineComponent({
         };
 
         return {
+            BASE_API: process.env.VUE_APP_APIHOST as unknown as string, // 接口API地址
             modelRef,
             rulesRef,
             formRef: formRef as unknown as typeof ElForm,
             resetFields,
-            onFinish
+            onFinish,
+            handleAvatarSuccess
         }
 
     }
 })
 </script>
+<style scoped>
+.avatar-uploader .el-upload {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.avatar-uploader .el-upload:hover {
+  border-color: #409EFF;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  line-height: 178px;
+  text-align: center;
+}
+.avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
+}
+</style>

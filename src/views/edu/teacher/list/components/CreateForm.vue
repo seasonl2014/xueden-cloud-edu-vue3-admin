@@ -163,7 +163,6 @@ export default defineComponent({
         const  handleAvatarSuccess = (res: any, file: any) =>{
              console.info("res值：",res.message)
              modelRef.avatar = res.message
-             //modelRef.avatar = URL.createObjectURL(file.raw);
           }
 
         // 重置
@@ -182,11 +181,8 @@ export default defineComponent({
                 ElMessage.warning(t('app.global.form.validatefields.catch'));
             }
         };
-      const { VUE_APP_APIHOST } = process.env;
-      const BASE_API = ref()
-      BASE_API.value = VUE_APP_APIHOST
         return {
-            BASE_API: BASE_API as unknown as string, // 接口API地址
+            BASE_API: process.env.VUE_APP_APIHOST as unknown as string, // 接口API地址
             modelRef,
             rulesRef,
             formRef: formRef as unknown as typeof ElForm,

@@ -114,6 +114,7 @@
         v-if="updateFormVisible===true"
         :visible="updateFormVisible"
         :values="updateData"
+        :headerToken="headerToken"
         :onCancel="() => updataFormCancel()"
         :onSubmitLoading="updateSubmitLoading"
         :onSubmit="updateSubmit"
@@ -187,23 +188,11 @@ export default defineComponent({
             await store.dispatch('ListTeacherTable/queryTableData', {
                 per: pagination.value.pageSize,
                 page: current,
-                s_key: searchVal.value
+                name: searchVal.value
             });
             loading.value = false;
         }
 
-      // 角色穿梭框数据
-      const getAllRoles = async (rolesData: any[]) => {
-        const data: any = [];
-        for (const role of rolesData) {
-          data.push({
-            key: role.id,
-            label: `${ role.name }`
-          });
-
-        }
-        return data;
-      };
         // 新增或修改获取token数据
         const headerToken = ref<string|null>();
         const getHeaderToken = async () => {
@@ -225,9 +214,8 @@ export default defineComponent({
         const createSubmit = async (values: Omit<TableListItem, 'id'>, resetFields: () => void) => {
             createSubmitLoading.value = true;
             const response: ResponseData  = await store.dispatch('ListTeacherTable/createTableData',values);
-            console.info("保存用户数据返回值：",response)
             const { code ,success,message} = response;
-            console.log('index页面组件接收的返回值success:', success);
+            // console.log('index页面组件接收的返回值success:', success);
             if(success === true) {
                 resetFields();
                 setCreateFormVisible(false);
@@ -272,10 +260,12 @@ export default defineComponent({
         const detailUpdateData = async (id: number) => {
             detailUpdateLoading.value = [id];
             const res: boolean = await store.dispatch('ListTeacherTable/queryUpdateData',id);
+          // console.info("index页面res：",res)
             if(res===true) {
+              await getHeaderToken()
                 setUpdateFormVisible(true);
             }
-            console.info("index页面获取用户所具有的角色数据：",updateData)
+            // console.info("index页面获取需要修改的讲师数据：",updateData)
             detailUpdateLoading.value = [];
         }
 
