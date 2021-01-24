@@ -158,8 +158,21 @@
             :onSubmit="createSubmit"
         />
 
+        <!--完善课程详情弹出框-->
+        <remarks-form
+            v-if="remarksFormVisible===true"
+            :visible="remarksFormVisible"
+            :values="updateData"
+            :onCancel="() => updataFormCancel()"
+            :onSubmitLoading="updateSubmitLoading"
+            :onSubmit="updateSubmit"
+        />
+
         <!--编辑弹出框-->
         <update-form
+            :headerToken="headerToken"
+            :subjectTreeData="subjectTreeData"
+            :teachers="teachers"
             v-if="updateFormVisible===true"
             :visible="updateFormVisible"
             :values="updateData"
@@ -178,6 +191,7 @@ import { ElMessageBox, ElMessage } from 'element-plus';
 import ScreenTable from '@/components/ScreenTable/index.vue';
 import CreateForm from './components/CreateForm.vue';
 import UpdateForm from './components/UpdateForm.vue';
+import RemarksForm from './components/RemarksForm.vue';
 import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
 import {ResponseData} from "@/utils/request";
@@ -196,6 +210,7 @@ interface ListCourseTablePageSetupData {
     detailUpdateData: (id: number) => Promise<void>;
     updateData: Partial<TableListItem>;
     updateFormVisible: boolean;
+    remarksFormVisible: boolean;
     updataFormCancel:  () => void;
     updateSubmitLoading: boolean;
     updateSubmit:  (values: TableListItem, resetFields: () => void) => Promise<void>;
@@ -217,7 +232,8 @@ export default defineComponent({
     components: {
         ScreenTable,
         CreateForm,
-        UpdateForm
+        UpdateForm,
+        RemarksForm
     },
     directives: {
       permission: vPermission
@@ -258,6 +274,13 @@ export default defineComponent({
       const getHeaderToken = async () => {
         const token = await getToken();
         headerToken.value = 'Bearer '+token;
+      }
+
+      // 课程详情弹框 - visible
+      const remarksFormVisible = ref<boolean>(false);
+      // 赋值表单
+      const setRemarksFormVisible = (val: boolean) => {
+        remarksFormVisible.value = val;
       }
 
         // 新增或修改获取课程分类树形数据
@@ -302,6 +325,7 @@ export default defineComponent({
             const { code ,success,message} = response;
             console.log('index页面组件接收的返回值success:', success);
             if(success === true) {
+                setRemarksFormVisible(true);
                 resetFields();
                 setCreateFormVisible(false);
                 ElMessage.success(message);
@@ -317,25 +341,9 @@ export default defineComponent({
         const updateFormVisible = ref<boolean>(false);
         // 赋值表单
         const setUpdateFormVisible = (val: boolean) => {
+            getAllTeacherList()
+            getHeaderToken()
             updateFormVisible.value = val;
-        }
-        // 取消编辑表单
-        const updataFormCancel = () => {
-            setUpdateFormVisible(false);
-            store.commit('ListCourseTable/setUpdateData',{});
-        }
-        // 编辑弹框 - 提交 loading
-        const updateSubmitLoading = ref<boolean>(false);
-        // 编辑弹框 - 提交
-        const updateSubmit = async (values: TableListItem, resetFields: () => void) => {
-            updateSubmitLoading.value = true;
-            const res: boolean = await store.dispatch('ListCourseTable/updateTableData',values);
-            if(res === true) {
-                updataFormCancel();
-                ElMessage.success('编辑成功！');
-                await getList(pagination.value.current);
-            }
-            updateSubmitLoading.value = false;
         }
 
         // 编辑弹框 data
@@ -347,11 +355,33 @@ export default defineComponent({
             const res: boolean = await store.dispatch('ListCourseTable/queryUpdateData',id);
             console.info("index页面获取需要更新的数据res：",res)
             if(res===true) {
-                setUpdateFormVisible(true);
+                 setUpdateFormVisible(true);
             }
 
             detailUpdateLoading.value = [];
         }
+
+      // 取消编辑表单
+      const updataFormCancel = () => {
+        setUpdateFormVisible(false);
+        store.commit('ListCourseTable/setUpdateData',{});
+      }
+      // 编辑弹框 - 提交 loading
+      const updateSubmitLoading = ref<boolean>(false);
+      // 编辑弹框 - 提交
+      const updateSubmit = async (values: TableListItem, resetFields: () => void) => {
+        updateSubmitLoading.value = true;
+        const res: boolean = await store.dispatch('ListCourseTable/updateTableData',values);
+        if(res === true) {
+          updataFormCancel();
+          ElMessage.success('编辑成功！');
+          const res: boolean = await store.dispatch('ListCourseTable/queryUpdateData',values.id);
+          if(res===true) {
+            setRemarksFormVisible(true);
+          }
+        }
+        updateSubmitLoading.value = false;
+      }
 
 
         // 删除 loading
@@ -404,6 +434,7 @@ export default defineComponent({
             detailUpdateData,
             updateData: updateData as Partial<TableListItem>,
             updateFormVisible: updateFormVisible as unknown as boolean,
+            remarksFormVisible: remarksFormVisible as unknown as boolean,
             updataFormCancel,
             updateSubmitLoading: updateSubmitLoading as unknown as boolean,
             updateSubmit,

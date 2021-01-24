@@ -16,8 +16,8 @@ export interface TableListItem {
   cover?: string;
   teacherId?: number;
   subjectId?: number;
-  title: string;
-  shortTitle: string;
+  title?: string;
+  shortTitle?: string;
   courseType?: number;
   difficulty?: number;
   price?: number;
@@ -25,8 +25,9 @@ export interface TableListItem {
   subjectParentId?: number;
   cateId?: number;
   delFlag?: boolean;
-  roleSets?: string[];
+  subjectSets?: any[];
   roleList?: string[];
+  remarks?: string;
 }
 
 export interface TableDataType {

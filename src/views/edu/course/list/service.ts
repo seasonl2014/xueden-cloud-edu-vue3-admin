@@ -36,7 +36,7 @@ export async function removeData(id: number): Promise<any> {
   });
 }
 
-// 根据用户ID获取课程信息
+// 根据课程ID获取课程信息
 export async function detailData(id: number): Promise<any> {
   return request({url: `/edu/course/edit/${id}`});
 }

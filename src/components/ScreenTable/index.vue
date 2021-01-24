@@ -88,7 +88,7 @@ export default defineComponent({
     setup() {
 
         const conentRef = ref<HTMLDivElement>();
-        const tableHeight = ref<number>(400);
+        const tableHeight = ref<number>(500);
 
         const resizeHandler = debounce(() => {
             if (conentRef.value) {
