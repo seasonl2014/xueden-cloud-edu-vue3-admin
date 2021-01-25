@@ -240,6 +240,7 @@ export default defineComponent({
             cover: props.values.cover || '',
             teacherId: props.values.teacherId || 0,
             subjectId: props.values.subjectId || 0,
+            remarks: props.values.remarks || '',
         });
         pKeys.value = [props.values.subjectParentId,props.values.subjectId]
 
