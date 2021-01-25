@@ -35,3 +35,7 @@ export async function removeData(id: number): Promise<any> {
 export async function detailData(id: number): Promise<any> {
   return request({url: `/pages/list/${id}`});
 }
+// 获取阿里云视频点播凭证
+export async function getPlayAuthData(id: string): Promise<any> {
+  return request({url: `/edu/vod/getPlayAuth/${id}`});
+}

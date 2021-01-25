@@ -52,7 +52,7 @@
                     width="80">
                   <template #default="scope">
                     <el-tag v-if="scope.row.isFree===0">免费</el-tag>
-                    <el-tag type="success" v-else>收费</el-tag>
+                    <el-tag type="success" v-else-if="scope.row.isFree===1">收费</el-tag>
                   </template>
                 </el-table-column>
 
@@ -70,18 +70,23 @@
                   prop="videoSourceId"
                   width="80">
                 <template #default="scope">
-                  <el-tag v-if="scope.row.lev!=1&&scope.row.videoSourceId!=null"  @click="playVideoByVideoId(scope.row.videoSourceId)"  effect="dark" type="success" style="cursor: pointer;">播放</el-tag>
+                  <el-tag v-if="scope.row.lev!=1&&scope.row.videoSourceId!=null"  @click="playVideoByVideoId(scope.row.videoSourceId,scope.row.title)"  effect="dark" type="success" style="cursor: pointer;">播放</el-tag>
                   <el-tag v-if="scope.row.videoSourceId===null&&scope.row.lev!=1" effect="plain"  type="warning">未上传</el-tag>
                 </template>
               </el-table-column>
 
                 <el-table-column
                     label="操作"
-                    prop="action"
-                    width="150">
-                    <template #default="{row}">
-                        <el-button type="text" @click="() => detailUpdateData(row.id)" :loading="detailUpdateLoading.includes(row.id)">编辑</el-button>
-                        <el-button type="text"  @click="() => deleteTableData(row.id)" :loading="deleteLoading.includes(row.id)">删除</el-button>
+                    prop="action">
+                    <template #default="scope">
+                      <el-button v-if="scope.row.lev===1" title="添加课程小节" type="primary"  size="mini" icon="el-icon-circle-plus" @click="openAddVideo(scope.row.id)"></el-button>
+                      <el-button v-if="scope.row.lev!=1" plain title="上传视频"  type="primary"  size="mini" icon="el-icon-upload" @click="uploadVideoById(scope.row.id)"></el-button>
+                      <el-button v-if="scope.row.lev===1" title="编辑章"  type="primary"  size="mini" icon="el-icon-edit" @click="openEditChapter(scope.row.id)"></el-button>
+                      <el-button v-if="scope.row.lev!=1" plain title="编辑节"   type="success"  size="mini" icon="el-icon-edit" @click="openEditVideo(scope.row.id)"></el-button>
+                      <el-button v-if="scope.row.lev===1" title="删除章"  type="danger"  size="mini" icon="el-icon-delete" @click="delChapter(scope.row.id)"></el-button>
+                      <el-button v-if="scope.row.lev!=1" plain title="删除节"  type="danger"  size="mini" icon="el-icon-delete" @click="delVideo(scope.row.id)"></el-button>
+                       <!-- <el-button type="text" @click="() => detailUpdateData(row.id)" :loading="detailUpdateLoading.includes(row.id)">编辑</el-button>
+                        <el-button type="text"  @click="() => deleteTableData(row.id)" :loading="deleteLoading.includes(row.id)">删除</el-button>-->
                     </template>
                 </el-table-column>
 
@@ -117,6 +122,14 @@
                 :onSubmit="updateSubmit"
             />
 
+          <video-preview
+              v-if="dialogVideoVisible===true"
+              :visible="dialogVideoVisible"
+              :values="video"
+              :onCancel="() => videoPreviewCancel()"
+              :onSubmitLoading="updateSubmitLoading"
+              :onSubmit="updateSubmit"
+          />
 
         </el-card>
     </div>
@@ -127,9 +140,11 @@ import { useStore } from "vuex";
 import { ElMessageBox, ElMessage, ElForm } from "element-plus";
 import CreateForm from './components/CreateForm.vue';
 import UpdateForm from './components/UpdateForm.vue';
+import VideoPreview from './components/VideoPreview.vue';
 import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
 import {formatDate} from '@/utils/filters'
+
 interface ListChapterTablePageSetupData {
     list: TableListItem[];
     pagination: PaginationConfig;
@@ -155,28 +170,30 @@ interface ListChapterTablePageSetupData {
     searchFormRef: typeof ElForm;
     searchResetFields: () => void;
     searchFormSubmit: () => Promise<void>;
-    playVideoByVideoId: (videoId: number) => Promise<void>;
+    playVideoByVideoId: (videoId: string,titleVideo: string) => Promise<void>;
     durationFormatDate: (number: number) => any;
+    video: object;
+    dialogVideoVisible: boolean;
+    videoPreviewCancel:  () => void;
 }
 
 export default defineComponent({
     name: 'SyllabusTable',
     components: {
         CreateForm,
-        UpdateForm
+        UpdateForm,
+        VideoPreview
+
+
     },
-  filters: {
-    formatDate(time: any){
-      const data = new Date(time);
-      return formatDate(data,'hh:mm:ss');
-    }
-  },
     setup(): ListChapterTablePageSetupData {
 
         const store = useStore<{ ListChapterTable: ListStateType;ListCourseTable: ListStateType}>();
+
       // 编辑弹框 data
       const courseData = computed<Partial<TableListItem>>(() => store.state.ListCourseTable.updateData);
       console.info("课程courseData：",courseData.value.id);
+
 
         // 列表数据
         const list = computed<TableListItem[]>(() => store.state.ListChapterTable.tableData.list);
@@ -316,8 +333,27 @@ export default defineComponent({
          return formatDate(data,'hh:mm:ss');
        }
 
-      const playVideoByVideoId = async (videId: number)=>{
-        ElMessage.success('视频店铺！'+videId);
+      // 视频对象
+      const video = reactive({
+        videoSourceId: '',
+        isFree: 0,
+        sort: 1,
+        fileKey: '',
+        titleVideo: '添加课时',
+      });
+      const dialogVideoVisible = ref<boolean>(false);
+      const playVideoByVideoId = async (videId: string,titleVideo: string)=>{
+        // ElMessage.success('视频店铺！'+videId);
+        video.videoSourceId = videId;
+        video.titleVideo = titleVideo;
+        const res: boolean = await store.dispatch('ListChapterTable/getPlayAuthData',videId);
+
+        dialogVideoVisible.value = true
+      }
+
+      const videoPreviewCancel = () => {
+        dialogVideoVisible.value = false;
+        video.videoSourceId = '';
       }
 
         onMounted(()=> {
@@ -350,7 +386,10 @@ export default defineComponent({
             searchResetFields,
             searchFormSubmit,
             durationFormatDate,
-            playVideoByVideoId
+            playVideoByVideoId,
+            video,
+            dialogVideoVisible: dialogVideoVisible as unknown as boolean,
+            videoPreviewCancel,
         }
 
     }

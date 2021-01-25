@@ -8,12 +8,14 @@ import {
   createData,
   detailData,
   updateData,
+  getPlayAuthData,
 } from './service';
 
 
 export interface StateType {
     tableData: TableDataType;
     updateData: Partial<TableListItem>;
+    playAuth: string;
 }
 
 export interface ModuleType extends StoreModuleType<StateType> {
@@ -21,6 +23,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
     mutations: {
         setTableData: Mutation<StateType>;
         setUpdateData: Mutation<StateType>;
+        setPlayAuth: Mutation<StateType>;
     };
     actions: {
         queryTableData: Action<StateType, StateType>;
@@ -28,6 +31,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
         createTableData: Action<StateType, StateType>;
         queryUpdateData: Action<StateType, StateType>;
         updateTableData: Action<StateType, StateType>;
+        getPlayAuthData: Action<StateType, StateType>;
     };
 }
 const initState: StateType = {
@@ -42,6 +46,7 @@ const initState: StateType = {
       },
     },
     updateData: {},
+    playAuth: '',
 };
 
 const StoreModel: ModuleType = {
@@ -56,6 +61,9 @@ const StoreModel: ModuleType = {
         },
         setUpdateData(state, payload) {
             state.updateData = payload;
+        },
+        setPlayAuth(state, payload) {
+            state.playAuth = payload;
         },
     },
     actions: {
@@ -110,6 +118,18 @@ const StoreModel: ModuleType = {
             try {
                 const { id, ...params } = payload;
                 await updateData(id, { ...params });
+                return true;
+            } catch (error) {
+                return false;
+            }
+        },
+        async getPlayAuthData({ commit }, payload: string ) {
+            try {
+                const response: ResponseData = await getPlayAuthData(payload);
+                const { data } = response;
+                commit('setPlayAuth',{
+                    data
+                });
                 return true;
             } catch (error) {
                 return false;
