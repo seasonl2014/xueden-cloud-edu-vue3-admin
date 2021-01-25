@@ -10,11 +10,12 @@ export function formatDate (date: any, fmt: any) {
         's+': date.getSeconds()
     };
     for (const k in o) {
-        console.info("k--------:",k)
-       /* if (new RegExp(`(${k})`).test(fmt)) {
-            let str: any = o[k];
-            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? str : padLeftZero(str));
-        }*/
+        // console.info("k--------:",k)
+        if (new RegExp(`(${k})`).test(fmt)) {
+
+           /* const str = o[k] + '';
+            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? str : padLeftZero(str));*/
+        }
     }
     return fmt;
 }
