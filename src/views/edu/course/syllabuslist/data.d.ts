@@ -13,10 +13,11 @@ export interface PaginationConfig {
 
 export interface TableListItem {
   id: number;
-  name: string;
-  desc: string;
-  href: string;
-  type: string;
+  title: string;
+  sort: number;
+  courseId: number;
+  isFree?: number;
+  chapterId?: number;
 }
 
 export interface TableDataType {

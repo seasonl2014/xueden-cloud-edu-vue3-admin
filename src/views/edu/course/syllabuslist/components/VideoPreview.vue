@@ -8,16 +8,18 @@
       @close="onCancel"
   >
     <template #footer>
+      <div  class="prism-player" id="J_prismPlayer"></div>
       <el-button key="back" type="primary" @click="() => onCancel()">关闭</el-button>
     </template>
 
-    <div id="J_prismPlayer" class="prism-player"/>
+
+
 
   </el-dialog>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, reactive, ref } from "vue";
+import { defineComponent, onMounted , reactive, ref } from "vue";
 import {  ElMessage } from "element-plus";
 
 interface VideoPreviewSetupData {
@@ -41,6 +43,8 @@ export default defineComponent({
           }
 
       },
+      components: {
+      },
       setup(props): VideoPreviewSetupData{
         // 表单值
         const modelRef = reactive({
@@ -53,13 +57,24 @@ export default defineComponent({
         });
 
         const player = ref<any>()
+        // console.log('modelRef.playAuth---:',modelRef.playAuth)
+       const creatAliplayer =()=> {
+           player.value = new window.Aliplayer({
+                  id: "J_prismPlayer",
+                  autoplay: true,
+                  width: "100%",
+                  vid: modelRef.videoSourceId,
+                  playauth: modelRef.playAuth,
+                  cover:'http://java.goodym.cn/moyuplaylogo.png'
+                }, function(player: any) {
+                  console.log('播放器创建好了。')
+                });
+        }
 
-       /*const creatAliplayer =()=> {
+        onMounted(() => {
+          creatAliplayer()
 
-        }*/
-
-
-        // ElMessage.success('视频源ID！'+modelRef.titleVideo);
+        })
         return {
           modelRef,
           player: player as unknown as object,

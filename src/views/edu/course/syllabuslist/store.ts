@@ -9,12 +9,17 @@ import {
   detailData,
   updateData,
   getPlayAuthData,
+  createVideoTableData,
+  removeVideoData,
+  detailVideoData,
+  updateVideoData,
 } from './service';
 
 
 export interface StateType {
     tableData: TableDataType;
     updateData: Partial<TableListItem>;
+    updateVideoData: Partial<TableListItem>;
     playAuth: string;
 }
 
@@ -24,6 +29,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
         setTableData: Mutation<StateType>;
         setUpdateData: Mutation<StateType>;
         setPlayAuth: Mutation<StateType>;
+        setUpdateVideoData: Mutation<StateType>;
     };
     actions: {
         queryTableData: Action<StateType, StateType>;
@@ -32,6 +38,10 @@ export interface ModuleType extends StoreModuleType<StateType> {
         queryUpdateData: Action<StateType, StateType>;
         updateTableData: Action<StateType, StateType>;
         getPlayAuthData: Action<StateType, StateType>;
+        createVideoTableData: Action<StateType, StateType>;
+        deleteVideoTableData: Action<StateType, StateType>;
+        queryVideoUpdateData: Action<StateType, StateType>;
+        updateVideoTableData: Action<StateType, StateType>;
     };
 }
 const initState: StateType = {
@@ -46,6 +56,7 @@ const initState: StateType = {
       },
     },
     updateData: {},
+    updateVideoData: {},
     playAuth: '',
 };
 
@@ -63,7 +74,12 @@ const StoreModel: ModuleType = {
             state.updateData = payload;
         },
         setPlayAuth(state, payload) {
-            state.playAuth = payload;
+            state.playAuth = payload.playAuth;
+        },
+        setUpdateVideoData(state, payload) {
+
+            state.updateVideoData = payload;
+            console.info("state.updateVideoData:",state.updateVideoData)
         },
     },
     actions: {
@@ -93,7 +109,7 @@ const StoreModel: ModuleType = {
                 return false;
             }
         },
-        async createTableData({ commit }, payload: Pick<TableListItem, "name" | "desc" | "href" | "type"> ) {
+        async createTableData({ commit }, payload: Pick<TableListItem, "title" | "sort" | "courseId"> ) {
             try {
                 await createData(payload);
                 return true;
@@ -110,6 +126,7 @@ const StoreModel: ModuleType = {
                     ...data,
                 });
                 return true;
+
             } catch (error) {
                 return false;
             }
@@ -126,10 +143,55 @@ const StoreModel: ModuleType = {
         async getPlayAuthData({ commit }, payload: string ) {
             try {
                 const response: ResponseData = await getPlayAuthData(payload);
+                const { data,success } = response;
+                console.log('success---:',success)
+                if(success){
+                    commit('setPlayAuth',{
+                        ...data
+                    });
+                    return true;
+                }else {
+                    return false;
+                }
+
+            } catch (error) {
+                return false;
+            }
+        },
+        async createVideoTableData({ commit }, payload: Pick<TableListItem, "title" | "sort" | "courseId"> ) {
+            try {
+                await createVideoTableData(payload);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        },
+        async deleteVideoTableData({ commit }, payload: number ) {
+            try {
+                await removeVideoData(payload);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        },
+        async queryVideoUpdateData({ commit }, payload: number ) {
+            try {
+                const response: ResponseData = await detailVideoData(payload);
                 const { data } = response;
-                commit('setPlayAuth',{
-                    data
+                commit('setUpdateVideoData',{
+                    ...initState.updateVideoData,
+                    ...data,
                 });
+                return true;
+
+            } catch (error) {
+                return false;
+            }
+        },
+        async updateVideoTableData({ commit }, payload: TableListItem ) {
+            try {
+                const { id, ...params } = payload;
+                await updateVideoData(id, { ...params });
                 return true;
             } catch (error) {
                 return false;
