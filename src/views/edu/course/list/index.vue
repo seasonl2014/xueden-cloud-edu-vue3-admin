@@ -71,8 +71,17 @@
 
           <el-table-column prop="cover" label="课程封面" align="center" width="100px" padding="0px">
             <template #default="scope">
-                <img :src="scope.row.cover"
-                     style="height: 38px;width: 58px;cursor: pointer"/>
+              <el-popover effect="light" trigger="hover" placement="right">
+                <template #default>
+                  <img :src="scope.row.cover"
+                       style="height: 200px;width: 360px"/>
+
+                </template>
+                <template #reference>
+                  <img :src="scope.row.cover" style="height: 38px;width: 58px;cursor: pointer"/>
+                </template>
+              </el-popover>
+
             </template>
           </el-table-column>
 
@@ -99,7 +108,11 @@
               align="center"
               width="100">
             <template #default="scope">
-              <el-tag type="success" size="mini" closable v-text="scope.row.lessonNum"></el-tag>
+              <el-tooltip class="item" effect="dark" content="创建课程大纲" placement="top">
+                <a @click="() => syllabusData(scope.row.id)">
+                <el-tag type="success"  size="mini" closable v-text="scope.row.lessonNum"></el-tag>
+                </a>
+              </el-tooltip>
             </template>
           </el-table-column>
           <el-table-column
@@ -165,7 +178,7 @@
             :values="updateData"
             :onCancel="() => updataFormCancel()"
             :onSubmitLoading="updateSubmitLoading"
-            :onSubmit="updateSubmit"
+            :onSubmit="updateRemarksSubmit"
         />
 
         <!--编辑弹出框-->
@@ -180,6 +193,16 @@
             :onSubmitLoading="updateSubmitLoading"
             :onSubmit="updateSubmit"
         />
+
+        <!--课时弹出框-->
+        <Syllabus
+            :values="updateData"
+            :visible="syllabusVisible"
+            :onCancel="() => syllabusCancel()"
+            :onSubmitLoading="updateSubmitLoading"
+            :onSubmit="syllabusSubmit"
+        />
+
       </el-card>
     </el-col>
   </el-row>
@@ -192,6 +215,7 @@ import ScreenTable from '@/components/ScreenTable/index.vue';
 import CreateForm from './components/CreateForm.vue';
 import UpdateForm from './components/UpdateForm.vue';
 import RemarksForm from './components/RemarksForm.vue';
+import Syllabus from './components/Syllabus.vue';
 import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
 import {ResponseData} from "@/utils/request";
@@ -208,12 +232,17 @@ interface ListCourseTablePageSetupData {
     createSubmit: (values: Omit<TableListItem, 'id'>, resetFields: () => void) => Promise<void>;
     detailUpdateLoading: number[];
     detailUpdateData: (id: number) => Promise<void>;
+    syllabusData: (id: number) => Promise<void>;
     updateData: Partial<TableListItem>;
     updateFormVisible: boolean;
+    syllabusVisible: boolean;
     remarksFormVisible: boolean;
     updataFormCancel:  () => void;
+    syllabusCancel: () => void;
     updateSubmitLoading: boolean;
     updateSubmit:  (values: TableListItem, resetFields: () => void) => Promise<void>;
+    updateRemarksSubmit:  (values: TableListItem, resetFields: () => void) => Promise<void>;
+    syllabusSubmit: (values: TableListItem, resetFields: () => void) => Promise<void>;
     deleteLoading: number[];
     deleteTableData:  (id: number) => void;
     tabVal: string;
@@ -225,6 +254,7 @@ interface ListCourseTablePageSetupData {
     getAllTeacherList: () => Promise<void>;
     setCourseTypeRef: (val: object) => void;
     headerToken: string | null;
+    courseId: number;
 }
 
 export default defineComponent({
@@ -233,7 +263,8 @@ export default defineComponent({
         ScreenTable,
         CreateForm,
         UpdateForm,
-        RemarksForm
+        RemarksForm,
+        Syllabus
     },
     directives: {
       permission: vPermission
@@ -250,6 +281,12 @@ export default defineComponent({
         courseTypeRef = el;
       }
 
+      // 编辑弹框 - visible
+      const syllabusVisible = ref<boolean>(false);
+      // 赋值表单
+      const setSyllabusVisible = (val: boolean) => {
+        syllabusVisible.value = val;
+      }
 
         // 列表数据
         const list = computed<TableListItem[]>(() => store.state.ListCourseTable.tableData.list);
@@ -283,7 +320,9 @@ export default defineComponent({
         remarksFormVisible.value = val;
       }
 
-        // 新增或修改获取课程分类树形数据
+
+
+      // 新增或修改获取课程分类树形数据
         const subjectTreeData = ref<object[]>([]);
         const getParentCategoryList = async () => {
           const res: object[] = await store.dispatch('ListSubjectTable/getParentCategoryList');
@@ -383,8 +422,24 @@ export default defineComponent({
         updateSubmitLoading.value = false;
       }
 
+      // 提交课程详情
+      const updateRemarksSubmit = async (values: TableListItem, resetFields: () => void) => {
+        updateSubmitLoading.value = true;
+        const res: boolean = await store.dispatch('ListCourseTable/updateTableData',values);
+        if(res === true) {
+          updataFormCancel();
+          ElMessage.success('完善课程详情成功！');
+          const res: boolean = await store.dispatch('ListCourseTable/queryUpdateData',values.id);
+          if(res===true) {
+            setRemarksFormVisible(false);
+            setSyllabusVisible(true);
+          }
+        }
+        updateSubmitLoading.value = false;
+      }
 
-        // 删除 loading
+
+      // 删除 loading
         const deleteLoading = ref<number[]>([]);
         // 删除
         const deleteTableData = (id: number) => {
@@ -407,6 +462,32 @@ export default defineComponent({
 
         }
 
+
+      // 取课时列表
+      const syllabusCancel = () => {
+        setSyllabusVisible(false);
+        store.commit('ListCourseTable/setUpdateData',{});
+        //console.info("关闭课时列表")
+      }
+
+      // 课时弹框 - 提交
+      const syllabusSubmit = async (values: TableListItem, resetFields: () => void) => {
+        syllabusCancel()
+        ElMessage.success("提交课程大纲成功")
+      }
+
+
+      // 编辑课时
+      const courseId = ref<number>(0);
+      const syllabusData = async (id: number) => {
+        const res: boolean = await store.dispatch('ListCourseTable/queryUpdateData',id);
+        if(res===true) {
+          setSyllabusVisible(true)
+        }
+
+      }
+
+
         const tabVal = ref<string>('all');
 
 
@@ -419,6 +500,7 @@ export default defineComponent({
         onMounted(()=> {
            getList(1);
            getParentCategoryList();
+            getHeaderToken();
         })
 
         return {
@@ -432,12 +514,17 @@ export default defineComponent({
             createSubmit,
             detailUpdateLoading: detailUpdateLoading as unknown as number[],
             detailUpdateData,
+            syllabusData,
             updateData: updateData as Partial<TableListItem>,
             updateFormVisible: updateFormVisible as unknown as boolean,
             remarksFormVisible: remarksFormVisible as unknown as boolean,
+            syllabusVisible: syllabusVisible as unknown as boolean,
             updataFormCancel,
+            syllabusCancel,
             updateSubmitLoading: updateSubmitLoading as unknown as boolean,
             updateSubmit,
+            syllabusSubmit,
+            updateRemarksSubmit,
             deleteLoading: deleteLoading as unknown as number[],
             deleteTableData,
             tabVal: tabVal as unknown as string,
@@ -449,7 +536,7 @@ export default defineComponent({
             setCourseTypeRef,
             getAllTeacherList,
             headerToken:headerToken as unknown as string,
-
+            courseId: courseId as unknown as number,
         }
 
     }

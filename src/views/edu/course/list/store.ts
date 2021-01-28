@@ -57,6 +57,7 @@ const StoreModel: ModuleType = {
             state.tableData = payload;
         },
         setUpdateData(state, payload) {
+            console.info("关闭课时列表payload:",payload)
             state.updateData = payload;
         },
     },
