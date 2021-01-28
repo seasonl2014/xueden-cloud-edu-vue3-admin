@@ -2,10 +2,11 @@
   <el-dialog
       :close-on-click-modal="false"
       :close-on-press-escape="false"
-      title="课程大纲"
+      :title="values.title"
       width="1200px"
       :model-value="visible"
       @close="onCancel"
+      :destroy-on-close="true"
   >
 
     <template #footer>
@@ -26,12 +27,15 @@
 </template>
 
 <script lang="ts">
-import {  defineComponent } from "vue";
+import {  defineComponent,PropType,reactive,ref } from "vue";
 import { useI18n } from "vue-i18n";
 import SyllabusTable from '@/views/edu/course/syllabuslist/index.vue';
 import { ElForm, ElMessage } from "element-plus";
+import {TableListItem} from "@/views/edu/course/list/data";
 
 interface SyllabusSetupData {
+  modelRef: TableListItem;
+  resetFields: () => void;
   onFinish: () => Promise<void>;
 }
 
@@ -41,6 +45,10 @@ export default defineComponent({
     SyllabusTable
   },
   props: {
+    values: {
+      type: Object as PropType<Partial<TableListItem>>,
+      required: true
+    },
     visible: {
       type: Boolean,
       required: true
@@ -49,14 +57,30 @@ export default defineComponent({
       type: Function,
       required: true
     },
+    onSubmit: {
+      type: Function as PropType<(values: TableListItem, resetFields: () => void) => void>,
+      required: true
+    }
   },
-  setup(): SyllabusSetupData {
+  setup(props): SyllabusSetupData {
     const { t } = useI18n();
+    // form
+    const formRef = ref<typeof ElForm>();
+    // 重置
+    const resetFields = () => {
+      formRef.value?.resetFields();
+    }
+    // 表单值
+    const modelRef = reactive<TableListItem>({
+      id: props.values.id || 0,
+      title: props.values.title || '',
+    });
+
   // 提交
     const onFinish = async () => {
       try {
-        ElMessage.success("提交课程大纲审核")
-          //props.onSubmit(modelRef, resetFields);
+          //ElMessage.success("提交课程大纲审核")
+          props.onSubmit(modelRef, resetFields);
       } catch (error) {
         // console.log('error', error);
         ElMessage.warning(t('app.global.form.validatefields.catch'));
@@ -64,6 +88,8 @@ export default defineComponent({
     };
 
     return {
+      modelRef,
+      resetFields,
       onFinish
     }
 

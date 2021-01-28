@@ -248,7 +248,7 @@ export default defineComponent({
       }
       const handleSuccess = (response: any, file: any, fileList: any) =>{
         // console.info("上传图片返回信息",response)
-        modelRef.cover = response.message;
+        modelRef.cover = response.data.urlPath;
       }
 
         return {
