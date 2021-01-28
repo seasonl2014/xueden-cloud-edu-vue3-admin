@@ -13,6 +13,7 @@ import {
   removeVideoData,
   detailVideoData,
   updateVideoData,
+  getUploadPercentData   ,
 } from './service';
 
 
@@ -21,6 +22,7 @@ export interface StateType {
     updateData: Partial<TableListItem>;
     updateVideoData: Partial<TableListItem>;
     playAuth: string;
+    uploadPercent: number;
 }
 
 export interface ModuleType extends StoreModuleType<StateType> {
@@ -30,6 +32,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
         setUpdateData: Mutation<StateType>;
         setPlayAuth: Mutation<StateType>;
         setUpdateVideoData: Mutation<StateType>;
+        setUploadPercent: Mutation<StateType>;
     };
     actions: {
         queryTableData: Action<StateType, StateType>;
@@ -42,6 +45,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
         deleteVideoTableData: Action<StateType, StateType>;
         queryVideoUpdateData: Action<StateType, StateType>;
         updateVideoTableData: Action<StateType, StateType>;
+        getUploadPercentData: Action<StateType, StateType>;
     };
 }
 const initState: StateType = {
@@ -58,6 +62,7 @@ const initState: StateType = {
     updateData: {},
     updateVideoData: {},
     playAuth: '',
+    uploadPercent: 0,
 };
 
 const StoreModel: ModuleType = {
@@ -80,6 +85,9 @@ const StoreModel: ModuleType = {
 
             state.updateVideoData = payload;
             console.info("state.updateVideoData:",state.updateVideoData)
+        },
+        setUploadPercent(state, payload) {
+            state.uploadPercent = payload.uploadPercent;
         },
     },
     actions: {
@@ -193,6 +201,24 @@ const StoreModel: ModuleType = {
                 const { id, ...params } = payload;
                 await updateVideoData(id, { ...params });
                 return true;
+            } catch (error) {
+                return false;
+            }
+        },
+        async getUploadPercentData({ commit }, payload: string ) {
+            try {
+                const response: ResponseData = await getUploadPercentData(payload);
+                const { data,success } = response;
+                console.log('success---:',success)
+                if(success){
+                    commit('setUploadPercent',{
+                        ...data
+                    });
+                    return response;
+                }else {
+                    return null;
+                }
+
             } catch (error) {
                 return false;
             }

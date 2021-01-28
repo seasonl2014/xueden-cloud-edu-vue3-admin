@@ -80,8 +80,8 @@ export default defineComponent({
                     validator: async (rule: any, value: string) => {
                         if (value === '' || !value) {
                             throw new Error('请输入名称');
-                        } else if (value.length > 15) {
-                            throw new Error('长度不能大于15个字');
+                        } else if (value.length > 35) {
+                            throw new Error('长度不能大于35个字');
                         }
                     }
                 },

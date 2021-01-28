@@ -70,3 +70,8 @@ export async function updateVideoData(id: number, params: Omit<TableListItem, 'i
     data: params,
   });
 }
+
+// 获取上传视频进度
+export async function getUploadPercentData(id: string): Promise<any> {
+  return request({url: `/edu/vod/getUploadPercent/${id}`});
+}

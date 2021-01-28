@@ -80,7 +80,7 @@
                     prop="action">
                     <template #default="scope">
                       <el-button v-if="scope.row.lev===1" title="添加课程小节" type="primary"  size="mini" icon="el-icon-circle-plus" @click="openAddVideo(scope.row.id)"></el-button>
-                      <el-button v-if="scope.row.lev!=1" plain title="上传视频"  type="primary"  size="mini" icon="el-icon-upload" @click="uploadVideoById(scope.row.id)"></el-button>
+                      <el-button v-if="scope.row.lev!=1" plain title="上传视频"  :loading="detailUpdateVideoLoading.includes(scope.row.id)"  type="primary"  size="mini" icon="el-icon-upload" @click="uploadVideoById(scope.row.id)"></el-button>
                       <el-button v-if="scope.row.lev===1" title="编辑章" :loading="detailUpdateLoading.includes(scope.row.id)"  type="primary"  size="mini" icon="el-icon-edit" @click="openEditChapter(scope.row.id)"></el-button>
                       <el-button v-if="scope.row.lev!=1" plain title="编辑节" :loading="detailUpdateVideoLoading.includes(scope.row.id)"   type="success"  size="mini" icon="el-icon-edit" @click="openEditVideo(scope.row.id)"></el-button>
                       <el-button v-if="scope.row.lev===1" title="删除章"  type="danger"  size="mini" icon="el-icon-delete" @click="delChapter(scope.row.id)"></el-button>
@@ -142,6 +142,18 @@
               :onSubmit="updateVideoSubmit"
           />
 
+          <!--上传课程小节视频-->
+          <upload-video-form
+              v-if="uploadVideoFormVisible===true"
+              :visible="uploadVideoFormVisible"
+              :values="updateVideoData"
+              :headerToken="headerToken"
+              :onCancel="() => uploadVideoFormCancel()"
+              :onSubmitLoading="updateVideoSubmitLoading"
+              :onSubmit="updateVideoSubmit"
+              :getPercent="() => getUploadPercent()"
+          />
+
           <!--预览视频-->
           <video-preview
               v-if="dialogVideoVisible===true"
@@ -163,10 +175,13 @@ import CreateForm from './components/CreateForm.vue';
 import UpdateForm from './components/UpdateForm.vue';
 import CreateVideoForm from './components/CreateVideoForm.vue';
 import UpdateVideoForm from './components/UpdateVideoForm.vue';
+import UploadVideoForm from './components/UploadVideoForm.vue';
 import VideoPreview from './components/VideoPreview.vue';
 import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
 import {formatDate} from '@/utils/filters'
+import {getToken} from "@/utils/localToken";
+import {ResponseData} from "@/utils/request";
 
 interface ListChapterTablePageSetupData {
     list: TableListItem[];
@@ -186,12 +201,15 @@ interface ListChapterTablePageSetupData {
     openEditChapter: (id: number) => Promise<void>;
     openAddVideo: (id: number) => Promise<void>;
     openEditVideo: (id: number) => Promise<void>;
+    uploadVideoById: (id: number) => Promise<void>;
     updateData: Partial<TableListItem>;
     updateVideoData: Partial<TableListItem>;
     updateFormVisible: boolean;
     updateVideoFormVisible: boolean;
+    uploadVideoFormVisible: boolean;
     updataFormCancel:  () => void;
     updateVideoFormCancel:  () => void;
+    uploadVideoFormCancel:  () => void;
     updateSubmitLoading: boolean;
     updateVideoSubmitLoading: boolean;
     updateSubmit:  (values: TableListItem, resetFields: () => void) => Promise<void>;
@@ -211,6 +229,8 @@ interface ListChapterTablePageSetupData {
     video: object;
     dialogVideoVisible: boolean;
     videoPreviewCancel:  () => void;
+    headerToken: string | null;
+    getUploadPercent: () => void;
 }
 
 export default defineComponent({
@@ -220,7 +240,8 @@ export default defineComponent({
         UpdateForm,
         VideoPreview,
         CreateVideoForm,
-        UpdateVideoForm
+        UpdateVideoForm,
+        UploadVideoForm
     },
     setup(): ListChapterTablePageSetupData {
 
@@ -230,7 +251,12 @@ export default defineComponent({
       // 编辑弹框 data
       const courseData = computed<Partial<TableListItem>>(() => store.state.ListCourseTable.updateData);
       console.info("课程courseData：",courseData.value.id);
-
+      // 上传视频获取token数据
+      const headerToken = ref<string|null>();
+      const getHeaderToken = async () => {
+        const token = await getToken();
+        headerToken.value = 'Bearer '+token;
+      }
         // 列表数据
         const list = computed<TableListItem[]>(() => store.state.ListChapterTable.tableData.list);
 
@@ -299,7 +325,7 @@ export default defineComponent({
           resetFields();
           setCreateVideoFormVisible(false);
           ElMessage.success('新增成功！');
-          await getList(1);
+          await getList(pagination.value.current);
         }
         createVideoSubmitLoading.value = false;
       }
@@ -436,6 +462,35 @@ export default defineComponent({
         updateVideoSubmitLoading.value = false;
       }
 
+      // 上传课程小节视频
+      const uploadVideoFormVisible = ref<boolean>(false);
+      const setUploadVideoFormVisible = (val: boolean) => {
+        uploadVideoFormVisible.value = val;
+      }
+      // 上传视频弹框
+      const uploadVideoById = async (id: number) => {
+        detailUpdateVideoLoading.value = [id];
+        const res: boolean = await store.dispatch('ListChapterTable/queryVideoUpdateData',id);
+        console.info("编辑小节返回值res:",res)
+        if(res===true) {
+          setUploadVideoFormVisible(true);
+        }
+        detailUpdateVideoLoading.value = [];
+      }
+
+      // 取消上传课程小节视频 弹框
+      const uploadVideoFormCancel = () => {
+        setUploadVideoFormVisible(false);
+        store.commit('ListChapterTable/setUpdateVideoData',{});
+         getList(pagination.value.current);
+      }
+
+      // 获取上传进度条
+      const getUploadPercent = async() =>{
+        const response: ResponseData  = await store.dispatch('ListChapterTable/getUploadPercentData',updateVideoData.value.id);
+        //console.info("index组件获取进度条response:",response.data.percent)
+        return response.data.percent;
+      }
 
         // 搜索
         const searchOpen = ref<boolean>(false);
@@ -504,6 +559,7 @@ export default defineComponent({
 
         onMounted(()=> {
            getList(1);
+           getHeaderToken()
         })
 
         return {
@@ -524,12 +580,15 @@ export default defineComponent({
             openEditChapter,
             openAddVideo,
             openEditVideo,
+            uploadVideoById,
             updateData: updateData as Partial<TableListItem>,
             updateVideoData: updateVideoData as Partial<TableListItem>,
             updateFormVisible: updateFormVisible as unknown as boolean,
             updateVideoFormVisible: updateVideoFormVisible as unknown as boolean,
+            uploadVideoFormVisible: uploadVideoFormVisible as unknown as boolean,
             updataFormCancel,
             updateVideoFormCancel,
+            uploadVideoFormCancel,
             updateSubmitLoading: updateSubmitLoading as unknown as boolean,
             updateVideoSubmitLoading: updateVideoSubmitLoading as unknown as boolean,
             updateSubmit,
@@ -549,6 +608,8 @@ export default defineComponent({
             video,
             dialogVideoVisible: dialogVideoVisible as unknown as boolean,
             videoPreviewCancel,
+            headerToken:headerToken as unknown as string,
+            getUploadPercent,
         }
 
     }

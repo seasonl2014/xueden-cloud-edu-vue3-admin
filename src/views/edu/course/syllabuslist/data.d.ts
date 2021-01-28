@@ -18,6 +18,7 @@ export interface TableListItem {
   courseId: number;
   isFree?: number;
   chapterId?: number;
+  fileKey?: string;
 }
 
 export interface TableDataType {
