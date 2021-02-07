@@ -110,7 +110,9 @@
               </el-form-item>
             </el-col>
           </el-row>
-
+          <el-form-item label="课程描述">
+            <el-input type="textarea" v-model="modelRef.courseDesc"></el-input>
+          </el-form-item>
         </el-form>
 
 
@@ -192,8 +194,8 @@ export default defineComponent({
                     validator: async (rule: any, value: string) => {
                         if (value === '' || !value) {
                             throw new Error('请输入名称');
-                        } else if (value.length > 15) {
-                            throw new Error('长度不能大于15个字');
+                        } else if (value.length > 105) {
+                            throw new Error('长度不能大于105个字');
                         }
                     }
                 },
@@ -204,8 +206,8 @@ export default defineComponent({
               validator: async (rule: any, value: string) => {
                 if (value === '' || !value) {
                   throw new Error('请输入名称');
-                } else if (value.length > 15) {
-                  throw new Error('长度不能大于15个字');
+                } else if (value.length > 35) {
+                  throw new Error('长度不能大于35个字');
                 }
               }
             },

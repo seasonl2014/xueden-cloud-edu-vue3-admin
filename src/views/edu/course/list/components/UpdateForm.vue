@@ -114,6 +114,11 @@
               </el-form-item>
             </el-col>
           </el-row>
+
+          <el-form-item label="课程描述">
+            <el-input type="textarea" v-model="modelRef.courseDesc"></el-input>
+          </el-form-item>
+
         </el-form>
 
 

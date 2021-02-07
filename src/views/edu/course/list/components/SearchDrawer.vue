@@ -8,12 +8,12 @@
 
         <div class="content">
             <el-form :model="modelRef" ref="formRef">
-                <el-form-item label="位置">
-                    <TypeSelect v-model="modelRef.type" style="width:100%" />
+                <el-form-item label="课程类型">
+                    <TypeSelect v-model="modelRef.courseType" style="width:100%" />
                 </el-form-item>
 
-                <el-form-item label="名称" >
-                    <el-input v-model="modelRef.name" placeholder="请输入名称" />
+                <el-form-item label="课程难度" >
+                  <DifficultySelect v-model="modelRef.difficulty" style="width:100%" />
                 </el-form-item>
                 <el-form-item label="网址" >
                     <el-input v-model="modelRef.href" placeholder="请输入网址" />
@@ -54,6 +54,7 @@
 import { defineComponent, PropType, reactive, ref } from "vue";
 import { ElForm } from "element-plus";
 import TypeSelect from './TypeSelect.vue';
+import DifficultySelect from './DifficultySelect.vue';
 import { TableListItem } from "../data.d";
 
 
@@ -78,7 +79,8 @@ export default defineComponent({
         }
     },
     components: {
-        TypeSelect
+        TypeSelect,
+        DifficultySelect
     },
     setup(props) {
 

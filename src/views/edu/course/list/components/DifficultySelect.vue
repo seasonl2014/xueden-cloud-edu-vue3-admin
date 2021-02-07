@@ -1,10 +1,10 @@
 <template>
     <el-select v-model="value" clearable>
          <el-option label="请选择" :value="-1" disabled></el-option>
-        <el-option label="新手入门" :value="0"></el-option>
-        <el-option label="免费好课" :value="1"></el-option>
-        <el-option label="技能提高" :value="2"></el-option>
-        <el-option label="实战开发" :value="3"></el-option>
+        <el-option label="入门" :value="0"></el-option>
+        <el-option label="初级" :value="1"></el-option>
+        <el-option label="中级" :value="2"></el-option>
+        <el-option label="高级" :value="3"></el-option>
     </el-select>
 </template>
 <script lang="ts">
@@ -15,7 +15,7 @@ interface TypeSelectSetupData {
 }
 
 export default defineComponent({
-    name: 'TypeSelect',
+    name: 'DifficultySelect',
     props: {
         modelValue: {
             type: Number,
