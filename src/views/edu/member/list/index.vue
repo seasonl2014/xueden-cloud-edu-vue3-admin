@@ -1,15 +1,5 @@
 <template>
 
-  <el-card class="box-card">
-    <el-container style="margin-bottom:20px;">
-      <el-alert
-          show-icon
-          title="友情提示:  课程分类只支持二级分类"
-          type="warning">
-      </el-alert>
-    </el-container>
-  </el-card>
-
     <screen-table
         class="indexlayout-main-conent"
         row-key="id"
@@ -26,15 +16,16 @@
         <template #header>
             <el-row>
                     <el-col :span="8">
-                        <el-button v-permission="'sys:user:add'" type="primary" @click="() => setCreateFormVisible(true)">新增</el-button>
+                      <!--  <el-button type="primary" @click="() => setCreateFormVisible(true)">新增</el-button>-->
                     </el-col>
-                  <!--  <el-col :span="16" class="text-align-right">
-                        <el-input v-model="searchVal" style="width:200px;margin-left: 16px;" placeholder="请输入登录名/邮箱/手机号">
+                    <el-col :span="16" class="text-align-right">
+                        <el-input v-model="searchVal" style="width:200px;margin-left: 16px;" placeholder="请输入搜索内容">
                             <template #suffix>
                                 <i class="el-input__icon el-icon-search cursor-pointer" @click="searchSubmit"></i>
                             </template>
                         </el-input>
-                    </el-col>-->
+                       <!-- <el-button style="margin-left: 8px"  @click="() => searchDrawerVisible = true">高级搜索</el-button>-->
+                    </el-col>
             </el-row>
         </template>
 
@@ -48,62 +39,70 @@
             width="80">
         </el-table-column>
 
-        <el-table-column
-            label="分类名称"
-            prop="name"
-            width="150">
-        </el-table-column>
-
-      <el-table-column
-          label="排序"
-          prop="sort"
-          width="80">
-      </el-table-column>
-
-      <el-table-column
-          label="阿里云视频点播分类ID"
-          prop="cateId">
-      </el-table-column>
-      <el-table-column
-          label="层级"
-          prop="lev">
-        <template #default="{row}">
-          <el-tag v-if="row.lev===1" type="success">一级分类</el-tag>
-          <el-tag type="success" v-else-if="row.lev===2">二级分类</el-tag>
-          <el-tag type="danger" v-else>三级分类</el-tag>
+      <el-table-column  label="头像" sortable width="120">
+        <template #default="scope">
+          <img class="avatar" :src="scope.row.avatar" alt="scope.row.nickname" width="150px">
         </template>
       </el-table-column>
 
-
-
-
+      <el-table-column prop="vipType" label="会员类型" sortable width="120">
+        <template #default="scope">
+          <el-tag type="success"  effect="plain" v-text="scope.row.vipType"  size="mini">
+          </el-tag>
+        </template>
+      </el-table-column>
 
         <el-table-column
-            label="状态"
-            prop="delFlag">
+            label="手机号"
+            prop="mobile">
             <template #default="{row}">
-                <el-tag v-if="!row.delFlag" type="success">正常</el-tag>
-                <el-tag v-else type="warning">停用</el-tag>
+                <a :href="row.mobile" target="_blank">{{row.mobile}}</a>
             </template>
         </el-table-column>
 
-      <el-table-column
-          label="创建时间"
-          prop="createDate">
+      <el-table-column prop="isTeacher" label="是否讲师" width="120">
+        <template #default="scope">
+          <el-tag type="success" v-if="scope.row.isTeacher===1" effect="plain"  size="mini">
+            是
+          </el-tag>
+          <el-tag type="info" v-else effect="plain"  size="mini">
+            否
+          </el-tag>
+        </template>
       </el-table-column>
 
-      <el-table-column
-          label="更新时间"
-          prop="updateDate">
+      <el-table-column prop="sex" label="性别" sortable width="80">
+        <template #default="scope">
+          <el-tag type="success" v-if="scope.row.sex===1" effect="plain"  size="mini">
+            女
+          </el-tag>
+          <el-tag type="info" v-else effect="plain"  size="mini">
+            男
+          </el-tag>
+        </template>
       </el-table-column>
+
+        <el-table-column
+            label="会员昵称"
+            prop="nickname">
+        </el-table-column>
+
+        <el-table-column
+            label="状态"
+            prop="type">
+            <template #default="{row}">
+                <el-tag v-if="!row.delFlag" type="success">正常</el-tag>
+                <el-tag v-else type="warning">禁用</el-tag>
+            </template>
+        </el-table-column>
 
         <el-table-column
             label="操作"
             prop="action"
             width="150">
             <template #default="{row}">
-                <el-button v-permission="'sys:user:edit'" type="text" @click="() => detailUpdateData(row.id)" :loading="detailUpdateLoading.includes(row.id)">编辑</el-button>
-                <el-button v-permission="'sys:user:delete'" type="text"  @click="() => deleteTableData(row.id)" :loading="deleteLoading.includes(row.id)">删除</el-button>
+                <!--<el-button type="text" @click="() => detailUpdateData(row.id)" :loading="detailUpdateLoading.includes(row.id)">编辑</el-button>-->
+                <el-button type="text"  @click="() => deleteTableData(row.id)" :loading="deleteLoading.includes(row.id)">删除</el-button>
             </template>
         </el-table-column>
 
@@ -112,7 +111,6 @@
 
 
     <create-form
-        :subjectTreeData="subjectTreeData"
         :visible="createFormVisible"
         :onCancel="() => setCreateFormVisible(false)"
         :onSubmitLoading="createSubmitLoading"
@@ -128,20 +126,27 @@
         :onSubmit="updateSubmit"
     />
 
+    <search-drawer
+        :visible="searchDrawerVisible"
+        :onClose="() => searchDrawerClose()"
+        :onSubmit="searchDrawerSubmit"
+    />
+
+
 
 </template>
 <script lang="ts">
-import { computed, defineComponent, onMounted, ref } from 'vue';
-import { useStore } from 'vuex';
-import { ElMessageBox, ElMessage } from 'element-plus';
+import { computed, defineComponent, onMounted, ref } from "vue";
+import { useStore } from "vuex";
+import { ElMessageBox, ElMessage } from "element-plus";
 import ScreenTable from '@/components/ScreenTable/index.vue';
 import CreateForm from './components/CreateForm.vue';
 import UpdateForm from './components/UpdateForm.vue';
+import SearchDrawer from './components/SearchDrawer.vue';
 import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
-import {ResponseData} from "@/utils/request";
-import vPermission from '@/directives/permission';
-interface ListSubjectTablePageSetupData {
+
+interface ListMemberTablePageSetupData {
     list: TableListItem[];
     pagination: PaginationConfig;
     loading: boolean;
@@ -161,83 +166,60 @@ interface ListSubjectTablePageSetupData {
     deleteTableData:  (id: number) => void;
     tabVal: string;
     searchVal: string;
-    subjectTreeData: object[];
+    searchDrawerVisible: boolean;
+    searchDrawerClose: () => void;
+    searchDrawerSubmit: (values: Omit<TableListItem, 'id'>) => Promise<void>;
     searchSubmit: () => Promise<void>;
-    getParentCategoryList: () => Promise<void>;
 }
 
 export default defineComponent({
-    name: 'ListSubjectTablePage',
+    name: 'ListMemberTablePage',
     components: {
         ScreenTable,
         CreateForm,
-        UpdateForm
+        UpdateForm,
+        SearchDrawer
     },
-    directives: {
-      permission: vPermission
-    },
-    setup(): ListSubjectTablePageSetupData {
+    setup(): ListMemberTablePageSetupData {
 
-       // 定义搜索关键词
-        const searchVal = ref<string>('');
-        const store = useStore<{ ListSubjectTable: ListStateType}>();
+        const store = useStore<{ ListMemberTable: ListStateType}>();
 
 
         // 列表数据
-        const list = computed<TableListItem[]>(() => store.state.ListSubjectTable.tableData.list);
+        const list = computed<TableListItem[]>(() => store.state.ListMemberTable.tableData.list);
 
         // 列表分页
-        const pagination = computed<PaginationConfig>(() => store.state.ListSubjectTable.tableData.pagination);
+        const pagination = computed<PaginationConfig>(() => store.state.ListMemberTable.tableData.pagination);
 
         // 获取数据
         const loading = ref<boolean>(true);
         const getList = async (current: number): Promise<void> => {
             loading.value = true;
-            await store.dispatch('ListSubjectTable/queryTableData', {
+            await store.dispatch('ListMemberTable/queryTableData', {
                 per: pagination.value.pageSize,
                 page: current,
-                s_key: searchVal.value
+                mobile: searchVal.value
             });
             loading.value = false;
         }
-
-        // 新增或修改获取课程分类树形数据
-        const subjectTreeData = ref<object[]>([]);
-        const getParentCategoryList = async () => {
-          const res: object[] = await store.dispatch('ListSubjectTable/getParentCategoryList');
-          console.info("获取课程分类树形数据：",res)
-          if(res.length>0) {
-            subjectTreeData.value=res
-          }else {
-            subjectTreeData.value = [];
-          }
-
-        }
-
 
 
         // 新增弹框 - visible
         const createFormVisible = ref<boolean>(false);
         const setCreateFormVisible = (val: boolean) => {
-          if(val)getParentCategoryList()
-          createFormVisible.value = val;
+            createFormVisible.value = val;
         };
         // 新增弹框 - 提交 loading
         const createSubmitLoading = ref<boolean>(false);
         // 新增弹框 - 提交
         const createSubmit = async (values: Omit<TableListItem, 'id'>, resetFields: () => void) => {
             createSubmitLoading.value = true;
-            const response: ResponseData  = await store.dispatch('ListSubjectTable/createTableData',values);
-            console.info("保存用户数据返回值：",response)
-            const { code ,success,message} = response;
-            console.log('index页面组件接收的返回值success:', success);
-            if(success === true) {
+            const res: boolean = await store.dispatch('ListMemberTable/createTableData',values);
+            if(res === true) {
                 resetFields();
                 setCreateFormVisible(false);
-                ElMessage.success(message);
+                ElMessage.success('新增成功！');
                 await getList(1);
-            }else {
-              ElMessage.error(message);
             }
             createSubmitLoading.value = false;
         }
@@ -245,22 +227,19 @@ export default defineComponent({
 
         // 编辑弹框 - visible
         const updateFormVisible = ref<boolean>(false);
-        // 赋值表单
         const setUpdateFormVisible = (val: boolean) => {
-            console.info("弹出编辑框----------------:",val)
             updateFormVisible.value = val;
         }
-        // 取消编辑表单
         const updataFormCancel = () => {
             setUpdateFormVisible(false);
-            store.commit('ListSubjectTable/setUpdateData',{});
+            store.commit('ListMemberTable/setUpdateData',{});
         }
         // 编辑弹框 - 提交 loading
         const updateSubmitLoading = ref<boolean>(false);
         // 编辑弹框 - 提交
         const updateSubmit = async (values: TableListItem, resetFields: () => void) => {
             updateSubmitLoading.value = true;
-            const res: boolean = await store.dispatch('ListSubjectTable/updateTableData',values);
+            const res: boolean = await store.dispatch('ListMemberTable/updateTableData',values);
             if(res === true) {
                 updataFormCancel();
                 ElMessage.success('编辑成功！');
@@ -270,17 +249,14 @@ export default defineComponent({
         }
 
         // 编辑弹框 data
-        const updateData = computed<Partial<TableListItem>>(() => store.state.ListSubjectTable.updateData);
-
+        const updateData = computed<Partial<TableListItem>>(() => store.state.ListMemberTable.updateData);
         const detailUpdateLoading = ref<number[]>([]);
         const detailUpdateData = async (id: number) => {
             detailUpdateLoading.value = [id];
-            const res: boolean = await store.dispatch('ListSubjectTable/queryUpdateData',id);
-            // console.info("index页面获取需要更新的数据res：",res)
+            const res: boolean = await store.dispatch('ListMemberTable/queryUpdateData',id);
             if(res===true) {
                 setUpdateFormVisible(true);
             }
-
             detailUpdateLoading.value = [];
         }
 
@@ -296,10 +272,10 @@ export default defineComponent({
                 type: 'warning',
             }).then(async () => {
                 deleteLoading.value = [id];
-                const res: boolean = await store.dispatch('ListSubjectTable/deleteTableData',id);
+                const res: boolean = await store.dispatch('ListMemberTable/deleteTableData',id);
                 if (res === true) {
                     ElMessage.success('删除成功！');
-                    getList(pagination.value.current);
+                    await getList(pagination.value.current);
                 }
                 deleteLoading.value = [];
             }).catch((error: any) =>{
@@ -309,12 +285,24 @@ export default defineComponent({
         }
 
         const tabVal = ref<string>('all');
+        const searchVal = ref<string>('');
 
+        // 搜索
+        const searchDrawerVisible = ref<boolean>(false);
+        const searchDrawerClose = () => {
+            searchDrawerVisible.value = false;
+        }
+        const searchDrawerSubmit = async (values: Omit<TableListItem, 'id'>) => {
+            console.log('search', values);
+            ElMessage.success('进行了搜索！');
+            searchDrawerClose();
+        }
 
         // 搜索
         const searchSubmit = async () => {
           await getList(1);
         }
+
 
         onMounted(()=> {
            getList(1);
@@ -325,6 +313,7 @@ export default defineComponent({
             pagination: pagination as unknown as PaginationConfig,
             loading: loading as unknown as boolean,
             getList,
+            searchSubmit,
             createFormVisible: createFormVisible as unknown as boolean,
             setCreateFormVisible,
             createSubmitLoading: createSubmitLoading as unknown as boolean,
@@ -340,11 +329,21 @@ export default defineComponent({
             deleteTableData,
             tabVal: tabVal as unknown as string,
             searchVal: searchVal as unknown as string,
-            subjectTreeData:subjectTreeData as unknown as object[],
-            searchSubmit,
-            getParentCategoryList
+            searchDrawerVisible: searchDrawerVisible as unknown as boolean,
+            searchDrawerClose,
+            searchDrawerSubmit
         }
 
     }
 })
 </script>
+<style scoped>
+.avatar {
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius:50%;
+  -webkit-border-radius:50%;
+  -moz-border-radius:50%;
+}
+</style>

@@ -1,23 +1,21 @@
 import { Mutation, Action } from 'vuex';
 import { StoreModuleType } from "@/utils/store";
 import { ResponseData } from '@/utils/request';
-import {TableDataType, TableListItem, TableListQueryParams, UpdateStatusParams} from './data.d';
+import { TableDataType, TableListItem, TableListQueryParams } from './data.d';
 import {
     queryList,
     removeData,
     createData,
     detailData,
     updateData,
-    getParentCategoryList,
-    getUploadPercentData,
-    updateStatusData,
-    downloadTableData,
+    assignData, assignTableData,
 } from './service';
 
 
 export interface StateType {
     tableData: TableDataType;
     updateData: Partial<TableListItem>;
+    assignData: Partial<TableListItem>;
 }
 
 export interface ModuleType extends StoreModuleType<StateType> {
@@ -25,6 +23,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
     mutations: {
         setTableData: Mutation<StateType>;
         setUpdateData: Mutation<StateType>;
+        setAssignData: Mutation<StateType>;
     };
     actions: {
         queryTableData: Action<StateType, StateType>;
@@ -32,10 +31,8 @@ export interface ModuleType extends StoreModuleType<StateType> {
         createTableData: Action<StateType, StateType>;
         queryUpdateData: Action<StateType, StateType>;
         updateTableData: Action<StateType, StateType>;
-        getParentCategoryList: Action<StateType, StateType>;
-        getUploadPercentData: Action<StateType, StateType>;
-        updateStatusData: Action<StateType, StateType>;
-        downloadTableData: Action<StateType, StateType>;
+        queryAssignData: Action<StateType, StateType>;
+        assignTableData: Action<StateType, StateType>;
     };
 }
 const initState: StateType = {
@@ -50,11 +47,12 @@ const initState: StateType = {
       },
     },
     updateData: {},
+    assignData: {},
 };
 
 const StoreModel: ModuleType = {
     namespaced: true,
-    name: 'ListCourseTable',
+    name: 'VipTypeListTable',
     state: {
         ...initState
     },
@@ -63,17 +61,17 @@ const StoreModel: ModuleType = {
             state.tableData = payload;
         },
         setUpdateData(state, payload) {
-            //console.info("关闭课时列表payload:",payload)
             state.updateData = payload;
+        },
+        setAssignData(state, payload) {
+            state.assignData = payload;
         },
     },
     actions: {
-        // 获取课程列表数据
         async queryTableData({ commit }, payload: TableListQueryParams ) {
             try {
                 const response: ResponseData = await queryList(payload);
                 const { data,count } = response;
-                //console.info("课程管理数据：",data)
                 commit('setTableData',{
                     ...initState.tableData,
                     list: data || [],
@@ -88,7 +86,6 @@ const StoreModel: ModuleType = {
                 return false;
             }
         },
-        // 删除课程数据
         async deleteTableData({ commit }, payload: number ) {
             try {
                 await removeData(payload);
@@ -97,36 +94,27 @@ const StoreModel: ModuleType = {
                 return false;
             }
         },
-        // 新增课程分类数据
-        async createTableData({ commit }, payload: Pick<TableListItem, "title" | "shortTitle" | "courseType" | "difficulty" > ) {
+        async createTableData({ commit }, payload: Pick<TableListItem, "name" | "vipMoney" > ) {
             try {
-                const response: ResponseData = await createData(payload);
-                return response;
+                await createData(payload);
+                return true;
             } catch (error) {
-                return null;
+                return false;
             }
         },
-        // 获取需要更新的课程数据
         async queryUpdateData({ commit }, payload: number ) {
             try {
                 const response: ResponseData = await detailData(payload);
                 const { data } = response;
-
-
-
-                /*console.info("封装后的角色数据：",roleList)
-                console.info("获取课程所具有的角色数据：",data.roleIds)*/
-
                 commit('setUpdateData',{
                     ...initState.updateData,
-                    ...data
+                    ...data,
                 });
                 return true;
             } catch (error) {
                 return false;
             }
         },
-        // 更新课程数据
         async updateTableData({ commit }, payload: TableListItem ) {
             try {
                 const { id, ...params } = payload;
@@ -136,51 +124,24 @@ const StoreModel: ModuleType = {
                 return false;
             }
         },
-        // 获取课程分类树形数据
-        async getParentCategoryList({ commit }) {
+        async queryAssignData({ commit }, payload: number ) {
             try {
-                const response: ResponseData = await getParentCategoryList();
+                const response: ResponseData = await assignData(payload);
                 const { data } = response;
-                return data;
-            } catch (error) {
-                return null;
-            }
-        },
-        async getUploadPercentData({ commit }, payload: string ) {
-            try {
-                const response: ResponseData = await getUploadPercentData(payload);
-                const { data,success } = response;
-                console.log('success---:',success)
-                if(success){
-                    return response;
-                }else {
-                    return null;
-                }
-
-            } catch (error) {
-                return false;
-            }
-        },
-        // 更新课程状态
-        async updateStatusData({ commit }, payload: UpdateStatusParams ) {
-            try {
-                const { id, status } = payload;
-                const response: ResponseData = await updateStatusData(payload);
-                const { data } = response;
+                console.info("返回值",data)
+                commit('setAssignData',{
+                    ...initState.assignData,
+                    ...data,
+                });
                 return true;
             } catch (error) {
                 return false;
             }
         },
-        // 下载课程资料
-        async downloadTableData({ commit }, payload: number ) {
+        async assignTableData({ commit }, payload: TableListItem ) {
             try {
-                const response: ResponseData = await downloadTableData(payload);
-                const { data,success } = response;
-                commit('setUpdateData',{
-                    ...initState.updateData,
-                    ...data
-                });
+                const { id, ...params } = payload;
+                await assignTableData(id, { ...params });
                 return true;
             } catch (error) {
                 return false;

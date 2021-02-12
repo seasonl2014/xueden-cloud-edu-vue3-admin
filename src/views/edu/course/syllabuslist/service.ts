@@ -75,3 +75,8 @@ export async function updateVideoData(id: number, params: Omit<TableListItem, 'i
 export async function getUploadPercentData(id: string): Promise<any> {
   return request({url: `/edu/vod/getUploadPercent/${id}`});
 }
+
+// 获取批量上传视频进度
+export async function getBatchUploadPercentData(params: Omit<TableListItem, 'id'>): Promise<any> {
+  return request({url: `/edu/vod/getBatchUploadPercent/${params.fileKey}`});
+}

@@ -11,6 +11,15 @@ export interface PaginationConfig {
   showQuickJumper: boolean;
 }
 
+export interface TableFormDataType {
+  key: string;
+  name?: string;
+  value?: string;
+  edit?: boolean;
+  isNew?: boolean;
+  courseId?: number;
+}
+
 export interface TableListItem {
   id: number;
   cover?: string;
@@ -18,8 +27,8 @@ export interface TableListItem {
   subjectId?: number;
   title?: string;
   shortTitle?: string;
-  courseType?: number;
-  difficulty?: number;
+  courseType?: number | null;
+  difficulty?: number | null;
   price?: number;
   lessonNum?: number;
   subjectParentId?: number;
@@ -28,9 +37,19 @@ export interface TableListItem {
   subjectSets?: any[];
   roleList?: string[];
   remarks?: string;
+  courseDesc?: string;
+  fileKey?: string;
+  downloadLink?: string;
+  environmenParams?: TableFormDataType[];
+
 }
 
 export interface TableDataType {
   list: TableListItem[];
   pagination: PaginationConfig;
+}
+
+export interface UpdateStatusParams {
+  id: number;
+  status: string;
 }

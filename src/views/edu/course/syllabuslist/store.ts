@@ -13,7 +13,8 @@ import {
   removeVideoData,
   detailVideoData,
   updateVideoData,
-  getUploadPercentData   ,
+  getUploadPercentData,
+  getBatchUploadPercentData,
 } from './service';
 
 
@@ -46,6 +47,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
         queryVideoUpdateData: Action<StateType, StateType>;
         updateVideoTableData: Action<StateType, StateType>;
         getUploadPercentData: Action<StateType, StateType>;
+        getBatchUploadPercentData: Action<StateType, StateType>;
     };
 }
 const initState: StateType = {
@@ -208,6 +210,24 @@ const StoreModel: ModuleType = {
         async getUploadPercentData({ commit }, payload: string ) {
             try {
                 const response: ResponseData = await getUploadPercentData(payload);
+                const { data,success } = response;
+                console.log('success---:',success)
+                if(success){
+                    commit('setUploadPercent',{
+                        ...data
+                    });
+                    return response;
+                }else {
+                    return null;
+                }
+
+            } catch (error) {
+                return false;
+            }
+        },
+        async getBatchUploadPercentData({ commit }, payload: TableListItem ) {
+            try {
+                const response: ResponseData = await getBatchUploadPercentData(payload);
                 const { data,success } = response;
                 console.log('success---:',success)
                 if(success){

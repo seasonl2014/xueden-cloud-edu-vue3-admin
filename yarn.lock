@@ -10873,6 +10873,11 @@ ts-loader@^6.2.2:
     micromatch "^4.0.0"
     semver "^6.0.0"
 
+ts-md5@^1.2.7:
+  version "1.2.7"
+  resolved "https://registry.npm.taobao.org/ts-md5/download/ts-md5-1.2.7.tgz#b76471fc2fd38f0502441f6c3b9494ed04537401"
+  integrity sha1-t2Rx/C/TjwUCRB9sO5SU7QRTdAE=
+
 ts-pnp@^1.1.6:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/ts-pnp/-/ts-pnp-1.2.0.tgz#a500ad084b0798f1c3071af391e65912c86bca92"

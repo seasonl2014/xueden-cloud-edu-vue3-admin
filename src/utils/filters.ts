@@ -13,8 +13,9 @@ export function formatDate (date: any, fmt: any) {
         // console.info("k--------:",k)
         if (new RegExp(`(${k})`).test(fmt)) {
 
-           /* const str = o[k] + '';
-            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? str : padLeftZero(str));*/
+            // @ts-ignore
+            const str = o[k] + '';
+            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? str : padLeftZero(str));
         }
     }
     return fmt;

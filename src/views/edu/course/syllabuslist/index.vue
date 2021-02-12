@@ -85,7 +85,8 @@
                       <el-button v-if="scope.row.lev!=1" plain title="编辑节" :loading="detailUpdateVideoLoading.includes(scope.row.id)"   type="success"  size="mini" icon="el-icon-edit" @click="openEditVideo(scope.row.id)"></el-button>
                       <el-button v-if="scope.row.lev===1" title="删除章"  type="danger"  size="mini" icon="el-icon-delete" @click="delChapter(scope.row.id)"></el-button>
                       <el-button v-if="scope.row.lev!=1" plain title="删除节"  type="danger"  size="mini" icon="el-icon-delete" @click="delVideo(scope.row.id)"></el-button>
-                       <!-- <el-button type="text" @click="() => detailUpdateData(row.id)" :loading="detailUpdateLoading.includes(row.id)">编辑</el-button>
+                      <el-button v-if="scope.row.lev===1" title="批量上传视频" :loading="detailBatchUploadLoading.includes(scope.row.id)"  type="primary"  size="mini" icon="el-icon-upload" @click="batchUploadVideoById(scope.row.id)"></el-button>
+                      <!-- <el-button type="text" @click="() => detailUpdateData(row.id)" :loading="detailUpdateLoading.includes(row.id)">编辑</el-button>
                         <el-button type="text"  @click="() => deleteTableData(row.id)" :loading="deleteLoading.includes(row.id)">删除</el-button>-->
                     </template>
                 </el-table-column>
@@ -154,6 +155,18 @@
               :getPercent="() => getUploadPercent()"
           />
 
+          <!--批量上传课程小节视频-->
+          <batch-upload-video-form
+              v-if="batchUploadVideoFormVisible===true"
+              :visible="batchUploadVideoFormVisible"
+              :values="updateData"
+              :headerToken="headerToken"
+              :onCancel="() => batchUploadVideoFormCancel()"
+              :onSubmitLoading="updateVideoSubmitLoading"
+              :onSubmit="updateVideoSubmit"
+              :getPercent="getBatchUploadPercent"
+          />
+
           <!--预览视频-->
           <video-preview
               v-if="dialogVideoVisible===true"
@@ -176,6 +189,7 @@ import UpdateForm from './components/UpdateForm.vue';
 import CreateVideoForm from './components/CreateVideoForm.vue';
 import UpdateVideoForm from './components/UpdateVideoForm.vue';
 import UploadVideoForm from './components/UploadVideoForm.vue';
+import BatchUploadVideoForm from './components/BatchUploadVideoForm.vue';
 import VideoPreview from './components/VideoPreview.vue';
 import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
@@ -197,19 +211,23 @@ interface ListChapterTablePageSetupData {
     createSubmit: (values: Omit<TableListItem, 'id'>, resetFields: () => void) => Promise<void>;
     createVideoSubmit: (values: Omit<TableListItem, 'id'>, resetFields: () => void) => Promise<void>;
     detailUpdateLoading: number[];
+    detailBatchUploadLoading: number[];
     detailUpdateVideoLoading: number[];
     openEditChapter: (id: number) => Promise<void>;
     openAddVideo: (id: number) => Promise<void>;
     openEditVideo: (id: number) => Promise<void>;
     uploadVideoById: (id: number) => Promise<void>;
+    batchUploadVideoById: (id: number) => Promise<void>;
     updateData: Partial<TableListItem>;
     updateVideoData: Partial<TableListItem>;
     updateFormVisible: boolean;
     updateVideoFormVisible: boolean;
     uploadVideoFormVisible: boolean;
+    batchUploadVideoFormVisible: boolean;
     updataFormCancel:  () => void;
     updateVideoFormCancel:  () => void;
     uploadVideoFormCancel:  () => void;
+    batchUploadVideoFormCancel:  () => void;
     updateSubmitLoading: boolean;
     updateVideoSubmitLoading: boolean;
     updateSubmit:  (values: TableListItem, resetFields: () => void) => Promise<void>;
@@ -231,6 +249,7 @@ interface ListChapterTablePageSetupData {
     videoPreviewCancel:  () => void;
     headerToken: string | null;
     getUploadPercent: () => void;
+    getBatchUploadPercent: (values: TableListItem) => Promise<number>;
 }
 
 export default defineComponent({
@@ -241,7 +260,8 @@ export default defineComponent({
         VideoPreview,
         CreateVideoForm,
         UpdateVideoForm,
-        UploadVideoForm
+        UploadVideoForm,
+        BatchUploadVideoForm
     },
     setup(): ListChapterTablePageSetupData {
 
@@ -290,13 +310,13 @@ export default defineComponent({
               values.courseId = courseData.value.id
             }
 
-            console.info("保存章时课程ID是：",courseData.value.id)
+            // console.info("保存章时课程ID是：",courseData.value.id)
             const res: boolean = await store.dispatch('ListChapterTable/createTableData',values);
             if(res === true) {
                 resetFields();
                 setCreateFormVisible(false);
                 ElMessage.success('新增成功！');
-                await getList(1);
+                await getList(pagination.value.current);
             }
             createSubmitLoading.value = false;
         }
@@ -492,6 +512,37 @@ export default defineComponent({
         return response.data.percent;
       }
 
+      // 批量上传小节视频
+      const batchUploadVideoFormVisible = ref<boolean>(false);
+      const detailBatchUploadLoading = ref<number[]>([]);
+      const setBatchUploadVideoFormVisible = (val: boolean) => {
+        batchUploadVideoFormVisible.value = val;
+      }
+      // 批量上传视频弹框
+      const batchUploadVideoById = async (id: number) => {
+        detailBatchUploadLoading.value = [id];
+        const res: boolean = await store.dispatch('ListChapterTable/queryUpdateData',id);
+        console.info("批量上传小节视频返回值res:",res)
+        if(res===true) {
+          setBatchUploadVideoFormVisible(true);
+        }
+        detailBatchUploadLoading.value = [];
+      }
+      // 取消批量上传课程小节视频 弹框
+      const batchUploadVideoFormCancel = () => {
+        setBatchUploadVideoFormVisible(false);
+        store.commit('ListChapterTable/setUpdateData',{});
+        getList(pagination.value.current);
+      }
+
+      // 批量获取上传进度条
+      const getBatchUploadPercent = async(values: TableListItem) =>{
+        console.info("批量上传返回的参数值:",values)
+        const response: ResponseData  = await store.dispatch('ListChapterTable/getBatchUploadPercentData',values);
+        //console.info("index组件获取进度条response:",response.data.percent)
+        return response.data.percent;
+      }
+
         // 搜索
         const searchOpen = ref<boolean>(false);
         const setSearchOpen = (): void => {
@@ -581,14 +632,17 @@ export default defineComponent({
             openAddVideo,
             openEditVideo,
             uploadVideoById,
+            batchUploadVideoById,
             updateData: updateData as Partial<TableListItem>,
             updateVideoData: updateVideoData as Partial<TableListItem>,
             updateFormVisible: updateFormVisible as unknown as boolean,
             updateVideoFormVisible: updateVideoFormVisible as unknown as boolean,
             uploadVideoFormVisible: uploadVideoFormVisible as unknown as boolean,
+            batchUploadVideoFormVisible: batchUploadVideoFormVisible as unknown as boolean,
             updataFormCancel,
             updateVideoFormCancel,
             uploadVideoFormCancel,
+            batchUploadVideoFormCancel,
             updateSubmitLoading: updateSubmitLoading as unknown as boolean,
             updateVideoSubmitLoading: updateVideoSubmitLoading as unknown as boolean,
             updateSubmit,
@@ -610,6 +664,8 @@ export default defineComponent({
             videoPreviewCancel,
             headerToken:headerToken as unknown as string,
             getUploadPercent,
+            getBatchUploadPercent,
+            detailBatchUploadLoading: detailBatchUploadLoading as unknown as number[],
         }
 
     }

@@ -1,6 +1,6 @@
 <template>
 
-  <el-row :gutter="15">
+  <el-row :gutter="24">
 
     <!--课程分类-->
     <el-col :xs="24" :sm="24" :md="4" :lg="4" :xl="3">
@@ -14,17 +14,15 @@
             :ref="setCourseTypeRef"
             :data="subjectTreeData"
             :props="{children: 'children',label: 'name'}"
-            check-strictly
-            accordion
-            show-checkbox
             default-expand-all
             node-key="id"
+            @node-click="handleCheckChange"
         />
 
       </el-card>
     </el-col>
     <!--课程管理-->
-    <el-col :xs="24" :sm="24" :md="18" :lg="18" :xl="19" style="margin-bottom: 10px">
+    <el-col :xs="24" :sm="24" :md="20" :lg="20" :xl="20" style="margin-bottom: 10px">
       <el-card shadow="never" class="cus-card">
         <template #header>
           <el-tooltip class="item" effect="dark" content="课程管理" placement="top">
@@ -47,7 +45,7 @@
             <template #header>
                 <el-row>
                         <el-col :span="8">
-                            <el-button v-permission="'sys:user:add'" type="primary" @click="() => setCreateFormVisible(true)">新增</el-button>
+                            <el-button v-permission="'edu:course:add'" type="primary" @click="() => setCreateFormVisible(true)">新增</el-button>
                         </el-col>
                         <el-col :span="16" class="text-align-right">
                             <el-input v-model="searchVal" style="width:200px;margin-left: 16px;" placeholder="请输入课程标题">
@@ -55,6 +53,7 @@
                                     <i class="el-input__icon el-icon-search cursor-pointer" @click="searchSubmit"></i>
                                 </template>
                             </el-input>
+                          <el-button style="margin-left: 8px"  @click="() => searchDrawerVisible = true">高级搜索</el-button>
                         </el-col>
                 </el-row>
             </template>
@@ -143,7 +142,16 @@
 
           <el-table-column prop="status" label="课程状态" width="100" align="center" >
             <template #default="scope">
-              <el-tag :type="scope.row.status === 'Draft' ? 'primary' : 'success'">{{scope.row.status === 'Draft' ? '未发布' : '已发布'}}</el-tag>
+              <el-tooltip :content="scope.row.status === 'Draft' ? '未发布' : '已发布'" placement="top">
+                <el-switch
+                    v-model="scope.row.status"
+                    active-color="#13ce66"
+                    inactive-color="#ff4949"
+                    active-value="Normal"
+                    inactive-value="Draft"
+                    @change="updateStatus(scope.row.id,scope.row.status)">
+                </el-switch>
+              </el-tooltip>
             </template>
           </el-table-column>
 
@@ -152,8 +160,10 @@
                 prop="action"
                 width="150">
                 <template #default="{row}">
-                    <el-button v-permission="'sys:user:edit'" type="text" @click="() => detailUpdateData(row.id)" :loading="detailUpdateLoading.includes(row.id)">编辑</el-button>
-                    <el-button v-permission="'sys:user:delete'" type="text"  @click="() => deleteTableData(row.id)" :loading="deleteLoading.includes(row.id)">删除</el-button>
+                    <el-button v-permission="'edu:course:edit'"  type="text" @click="() => detailUpdateData(row.id)" :loading="detailUpdateLoading.includes(row.id)" icon="el-icon-edit">编辑</el-button>
+                    <el-button v-permission="'edu:course:delete'"  type="text"  @click="() => deleteTableData(row.id)" :loading="deleteLoading.includes(row.id)" icon="el-icon-delete">删除</el-button>
+                    <el-button v-permission="'edu:course:upload'"   title="上传课程资源"  :loading="detailUploadLoading.includes(row.id)"  type="text"  size="mini" icon="el-icon-upload" @click="uploadResourceById(row.id)">上传</el-button>
+                    <el-button v-permission="'edu:course:download'"  type="text"  @click="() => downloadTableData(row.id)" :loading="downloadLoading.includes(row.id)" icon="el-icon-download">下载</el-button>
                 </template>
             </el-table-column>
 
@@ -203,12 +213,29 @@
             :onSubmit="syllabusSubmit"
         />
 
+        <!--高级搜索弹出框-->
+        <search-drawer
+            :visible="searchDrawerVisible"
+            :onClose="() => searchDrawerClose()"
+            :onSubmit="searchDrawerSubmit"
+        />
+
+        <!--上传课程小节视频-->
+        <upload-resource-form
+            v-if="uploadResourceFormVisible===true"
+            :visible="uploadResourceFormVisible"
+            :values="updateData"
+            :headerToken="headerToken"
+            :onCancel="() => uploadResourceFormCancel()"
+            :getPercent="getUploadPercent"
+        />
+
       </el-card>
     </el-col>
   </el-row>
 </template>
 <script lang="ts">
-import { computed, defineComponent, onMounted, ref } from 'vue';
+import { computed, defineComponent, onMounted, ref,reactive } from 'vue';
 import { useStore } from 'vuex';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import ScreenTable from '@/components/ScreenTable/index.vue';
@@ -216,6 +243,8 @@ import CreateForm from './components/CreateForm.vue';
 import UpdateForm from './components/UpdateForm.vue';
 import RemarksForm from './components/RemarksForm.vue';
 import Syllabus from './components/Syllabus.vue';
+import SearchDrawer from './components/SearchDrawer.vue';
+import UploadResourceForm from './components/UploadResourceForm.vue';
 import { StateType as ListStateType } from "./store";
 import { PaginationConfig, TableListItem } from './data.d';
 import {ResponseData} from "@/utils/request";
@@ -231,6 +260,7 @@ interface ListCourseTablePageSetupData {
     createSubmitLoading: boolean;
     createSubmit: (values: Omit<TableListItem, 'id'>, resetFields: () => void) => Promise<void>;
     detailUpdateLoading: number[];
+    detailUploadLoading: number[];
     detailUpdateData: (id: number) => Promise<void>;
     syllabusData: (id: number) => Promise<void>;
     updateData: Partial<TableListItem>;
@@ -245,6 +275,8 @@ interface ListCourseTablePageSetupData {
     syllabusSubmit: (values: TableListItem, resetFields: () => void) => Promise<void>;
     deleteLoading: number[];
     deleteTableData:  (id: number) => void;
+    downloadLoading: number[];
+    downloadTableData:  (id: number) => void;
     tabVal: string;
     searchVal: string;
     subjectTreeData: object[];
@@ -255,6 +287,16 @@ interface ListCourseTablePageSetupData {
     setCourseTypeRef: (val: object) => void;
     headerToken: string | null;
     courseId: number;
+    handleCheckChange: (data: any, checked: any, indeterminate: any) => void;
+    subjectId: number;
+    searchDrawerVisible: boolean;
+    searchDrawerClose: () => void;
+    searchDrawerSubmit: (values: Omit<TableListItem, 'id'>) => Promise<void>;
+    uploadResourceById: (id: number) => Promise<void>;
+    uploadResourceFormVisible: boolean;
+    uploadResourceFormCancel:  () => void;
+    getUploadPercent: (fileKey: string) => Promise<number>;
+    updateStatus: (id: number,status: string) => void;
 }
 
 export default defineComponent({
@@ -264,7 +306,9 @@ export default defineComponent({
         CreateForm,
         UpdateForm,
         RemarksForm,
-        Syllabus
+        Syllabus,
+        SearchDrawer,
+        UploadResourceForm
     },
     directives: {
       permission: vPermission
@@ -274,6 +318,16 @@ export default defineComponent({
        // 定义搜索关键词
         const searchVal = ref<string>('');
         const store = useStore<{ ListCourseTable: ListStateType}>();
+
+      // 表单值
+      let modelRef = reactive<Omit<TableListItem, 'id'>>({
+        title: '',
+        shortTitle: '',
+        courseType: null,
+        difficulty: null
+      });
+
+      const subjectId=ref<number>();
 
       //  拿到树形组件dom对象(课程分类)
       let courseTypeRef: any;
@@ -301,7 +355,10 @@ export default defineComponent({
             await store.dispatch('ListCourseTable/queryTableData', {
                 per: pagination.value.pageSize,
                 page: current,
-                s_key: searchVal.value
+                title: searchVal.value,
+                courseType: modelRef.courseType,
+                difficulty: modelRef.difficulty,
+                subjectId:subjectId.value
             });
             loading.value = false;
         }
@@ -339,7 +396,7 @@ export default defineComponent({
       const teachers = ref<object[]>([]);
       const getAllTeacherList = async ()=>{
         const res: object[] = await store.dispatch('ListTeacherTable/getAllTeacherList');
-        console.info("获取讲师数据：",res)
+        // console.info("获取讲师数据：",res)
         if(res.length>0) {
           teachers.value=res
         }else {
@@ -392,7 +449,7 @@ export default defineComponent({
         const detailUpdateData = async (id: number) => {
             detailUpdateLoading.value = [id];
             const res: boolean = await store.dispatch('ListCourseTable/queryUpdateData',id);
-            console.info("index页面获取需要更新的数据res：",res)
+            // console.info("index页面获取需要更新的数据res：",res)
             if(res===true) {
                  setUpdateFormVisible(true);
             }
@@ -462,6 +519,34 @@ export default defineComponent({
 
         }
 
+      // 下载 loading
+      const downloadLoading = ref<number[]>([]);
+      // 下载
+      const downloadTableData = (id: number) => {
+
+        ElMessageBox.confirm('确定下载吗？', '下载资料',{
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }).then(async () => {
+          downloadLoading.value = [id];
+          const res: boolean = await store.dispatch('ListCourseTable/downloadTableData',id);
+          if (res === true) {
+            ElMessage.success('正在下载，请耐心等待......');
+            window.location.href = process.env.VUE_APP_APIHOST+"edu/oss/downFileFromOss?fileName="+updateData.value.downloadLink;
+
+            console.info("待下载数据：",updateData.value.downloadLink)
+
+            //ElMessage.success('下载成功！');
+            //await getList(pagination.value.current);
+          }
+          downloadLoading.value = [];
+        }).catch((error: any) =>{
+          console.log(error)
+        });
+
+      }
+
 
       // 取课时列表
       const syllabusCancel = () => {
@@ -487,6 +572,52 @@ export default defineComponent({
 
       }
 
+      // 上传课程资料
+      const detailUploadLoading = ref<number[]>([]);
+      const uploadResourceFormVisible = ref<boolean>(false);
+      const setUploadResourceFormVisible = (val: boolean) => {
+        uploadResourceFormVisible.value = val;
+      }
+      // 上传课程资料弹框
+      const uploadResourceById = async (id: number) => {
+        detailUploadLoading.value = [id];
+        const res: boolean = await store.dispatch('ListCourseTable/queryUpdateData',id);
+        if(res===true) {
+          setUploadResourceFormVisible(true);
+        }
+        detailUploadLoading.value = [];
+      }
+
+      // 取消上传课程小节视频 弹框
+      const uploadResourceFormCancel = () => {
+        setUploadResourceFormVisible(false);
+        store.commit('ListCourseTable/setUpdateData',{});
+        getList(pagination.value.current);
+      }
+
+      // 获取上传进度条
+      const getUploadPercent = async(fileKey: string) => {
+        console.info("index组件获取fileKey:",fileKey)
+        const response: ResponseData  = await store.dispatch('ListCourseTable/getUploadPercentData',fileKey);
+        //console.info("index组件获取进度条response:",response.data.percent)
+        return response.data.percent;
+      }
+
+      // 更新课程状态
+      const updateStatus = async (id: number,status: string) => {
+
+        // console.info("更新课程状态:",id,status)
+        if(id!=undefined ){
+          const res: boolean = await store.dispatch('ListCourseTable/updateStatusData',{
+            id:id,
+            status:status
+          });
+          if(res===true) {
+            await getList(pagination.value.current);
+          }
+        }
+
+      }
 
         const tabVal = ref<string>('all');
 
@@ -496,6 +627,27 @@ export default defineComponent({
           await getList(1);
 
         }
+
+        // 选择分类
+     const handleCheckChange=(data: any)=> {
+        //console.log("选择分类",data, checked, indeterminate);
+       subjectId.value = data.id
+       //subjectIds.value = courseTypeRef.getCheckedKeys()
+       console.log("选择的分类ID:",subjectId.value)
+       searchSubmit()
+      }
+
+      // 搜索
+      const searchDrawerVisible = ref<boolean>(false);
+      const searchDrawerClose = () => {
+        searchDrawerVisible.value = false;
+      }
+      const searchDrawerSubmit = async (values: Omit<TableListItem, 'id'>) => {
+        modelRef=values
+        console.log('search', values);
+        await searchSubmit()
+        searchDrawerClose();
+      }
 
         onMounted(()=> {
            getList(1);
@@ -513,8 +665,10 @@ export default defineComponent({
             createSubmitLoading: createSubmitLoading as unknown as boolean,
             createSubmit,
             detailUpdateLoading: detailUpdateLoading as unknown as number[],
+            detailUploadLoading: detailUploadLoading as unknown as number[],
             detailUpdateData,
             syllabusData,
+            uploadResourceById,
             updateData: updateData as Partial<TableListItem>,
             updateFormVisible: updateFormVisible as unknown as boolean,
             remarksFormVisible: remarksFormVisible as unknown as boolean,
@@ -527,6 +681,8 @@ export default defineComponent({
             updateRemarksSubmit,
             deleteLoading: deleteLoading as unknown as number[],
             deleteTableData,
+            downloadLoading: downloadLoading as unknown as number[],
+            downloadTableData,
             tabVal: tabVal as unknown as string,
             searchVal: searchVal as unknown as string,
             subjectTreeData:subjectTreeData as unknown as object[],
@@ -537,6 +693,15 @@ export default defineComponent({
             getAllTeacherList,
             headerToken:headerToken as unknown as string,
             courseId: courseId as unknown as number,
+            handleCheckChange,
+            subjectId: subjectId as unknown as number,
+            searchDrawerVisible: searchDrawerVisible as unknown as boolean,
+            searchDrawerClose,
+            searchDrawerSubmit,
+            uploadResourceFormVisible: uploadResourceFormVisible as unknown as boolean,
+            uploadResourceFormCancel,
+            getUploadPercent,
+            updateStatus,
         }
 
     }
