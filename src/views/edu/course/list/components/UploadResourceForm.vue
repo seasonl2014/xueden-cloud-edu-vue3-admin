@@ -27,7 +27,7 @@
               multiple>
             <i class="el-icon-upload"/>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-            <div  class="el-upload__tip">只能上传mp4文件，且不超过500mb</div>
+            <div  class="el-upload__tip">只能上传zip、rar文件，且不超过500mb</div>
           </el-upload>
           <!--进度条-->
           <el-progress v-show="showProgress" :text-inside="true" :stroke-width="24" :percentage="uploadPercent" status="success"></el-progress>
@@ -49,7 +49,6 @@ interface UpdateVideoFormSetupData {
     rulesRef: any;
     formRef: typeof ElForm;
     resetFields: () => void;
-    onFinish: () => Promise<void>;
     uploadApi: string;
     handleProgress: (file: any) => void;
     showProgress: boolean; // 是否显示进度条
@@ -77,16 +76,8 @@ export default defineComponent({
             type: Function,
             required: true
         },
-        onSubmitLoading: {
-            type: Boolean,
-            required: true
-        },
-        onSubmit: {
-            type: Function as PropType<(values: TableListItem, resetFields: () => void) => void>,
-            required: true
-        },
         getPercent: {
-          type: Function,
+          type: Function as PropType<(values: string) => number>,
           required: true
         }
     },
@@ -111,19 +102,16 @@ export default defineComponent({
         const modelRef = reactive<TableListItem>({
             id: props.values.id || 0,
             title: props.values.title || '',
-            sort: props.values.sort || 0,
-            courseId: props.values.courseId || 0,
-            chapterId: props.values.chapterId || 0,
-            isFree: props.values.isFree || 0,
-            fileKey: props.values.fileKey || '',
         });
 
       /**
        * 获取进度条
        */
      const getUploadPercent= async ()=>{
-        const response: number = await props.getPercent()
-        //console.log("返回值",response)
+        const fileKey: string = modelRef.fileKey===undefined?"":modelRef.fileKey
+        //console.log("传参fileKey：",fileKey)
+        const response: number = await props.getPercent(fileKey)
+        // console.log("返回值111：",response)
         if(response >= 100){
           clearInterval(intervalId)
           uploadPercent.value = 100
@@ -146,7 +134,7 @@ export default defineComponent({
         const fileDetails = file.name+file.size+file.type+file.lastModifiedDate;
         //使用当前文件的信息用md5加密生成一个key 这个加密是根据文件的信息来加密的  如果相同的文件 加的密还是一样的
         const key = Md5.hashStr(fileDetails);
-        console.info(key);
+        //console.info(key);
         modelRef.fileKey = key.toString()
         if (i.value === 0) { // 控制上传中状态只执行一次上传
           showStatus()
@@ -165,7 +153,7 @@ export default defineComponent({
 
       // 文件上传成功
      const FileOnSuccess=(response: any, file: any, fileList: any)=>{
-       console.info("文件上传成功后：",response)
+       //console.info("文件上传成功后：",response)
         // 进度条隐藏
         showProgress.value = false
         // 重置uploadPercent上传进度条
@@ -216,26 +204,14 @@ export default defineComponent({
         const resetFields = () => {
             formRef.value?.resetFields();
         }
-        // 提交
-        const onFinish = async () => {
-            try {
-                const valid: boolean | undefined =  await formRef.value?.validate();
-                if(valid === true) {
-                    props.onSubmit(modelRef, resetFields);
-                }
-            } catch (error) {
-                // console.log('error', error);
-                ElMessage.warning(t('app.global.form.validatefields.catch'));
-            }
-        };
+
 
         return {
             modelRef,
             rulesRef,
             formRef: formRef as unknown as typeof ElForm,
             resetFields,
-            onFinish,
-            uploadApi: process.env.VUE_APP_APIHOST+'edu/vod/uploadById',
+            uploadApi: process.env.VUE_APP_APIHOST+'edu/oss/uploadCourseResource',
             handleProgress,
             showProgress: showProgress as unknown as boolean,
             FileOnSuccess,

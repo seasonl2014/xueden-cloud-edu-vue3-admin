@@ -15,13 +15,7 @@
                 <el-form-item label="课程难度" >
                   <DifficultySelect v-model="modelRef.difficulty" style="width:100%" />
                 </el-form-item>
-                <el-form-item label="网址" >
-                    <el-input v-model="modelRef.href" placeholder="请输入网址" />
-                </el-form-item>
 
-                <el-form-item label="备注" >
-                    <el-input v-model="modelRef.desc" placeholder="请输入备注" />
-                </el-form-item>
             </el-form>
         </div>
 

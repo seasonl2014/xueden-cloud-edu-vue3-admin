@@ -22,6 +22,12 @@
               <div class="indexlayout-main-conent">
                 <el-card shadow="never" class="cus-card">
                   <template #header>
+                    开发环境:
+                  </template>
+                  <TableForm :courseId="modelRef.id" v-model="modelRef.environmenParams" />
+                </el-card>
+                <el-card shadow="never" class="cus-card">
+                  <template #header>
                     课程详情:
                   </template>
                   <CKEditor v-model="modelRef.remarks" />
@@ -36,7 +42,7 @@ import { useI18n } from "vue-i18n";
 import { ElForm, ElMessage } from "element-plus";
 import { TableListItem } from "../data.d";
 import CKEditor from "@/components/CKEditor/index.vue";
-
+import TableForm from './TableForm/index.vue';
 interface RemarksFormSetupData {
     modelRef: TableListItem;
     rulesRef: any;
@@ -70,7 +76,8 @@ export default defineComponent({
         }
     },
     components: {
-      CKEditor
+      CKEditor,
+      TableForm
     },
     setup(props): RemarksFormSetupData {
 
@@ -79,10 +86,11 @@ export default defineComponent({
         const modelRef = reactive<TableListItem>({
             id: props.values.id || 0,
             remarks: props.values.remarks || '',
+            environmenParams: props.values.environmenParams || [],
         });
 
-        console.info("课程详情编辑课程ID:",props.values.id)
-        console.info("课程详情remarks:",props.values.remarks)
+       /* console.info("课程详情编辑课程ID:",props.values.id)
+        console.info("课程详情remarks:",props.values.remarks)*/
         // 表单验证
         const rulesRef = reactive({
             id: [],
