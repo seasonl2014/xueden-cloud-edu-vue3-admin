@@ -1,6 +1,6 @@
 <template>
      <el-table
-        row-key="key"
+        row-key="id"
         header-row-class-name="custom-table-header"
         v-loading="TableLoading"
         :data="TableData"
@@ -41,8 +41,8 @@
                     </span>
                 </template>
                 <span v-else>
-                    <el-button type="text" @click="toggle(row.key)">编辑</el-button>
-                    <el-popconfirm title="是否要删除此行？" @confirm="remove(row.key)">
+                    <el-button type="text" @click="toggle(row.id)">编辑</el-button>
+                    <el-popconfirm title="是否要删除此行？" @confirm="remove(row.id)">
                         <template #reference>
                             <el-button type="text">删除</el-button>
                         </template>
@@ -71,9 +71,9 @@ interface TableFormSetupData {
     TableLoading: boolean;
     newTableData:  () => void;
     saveRow: (record: TableFormDataType) => void;
-    remove: (key: string) => void;
-    cancel: (key: string) => void;
-    toggle: (key: string) => void;
+    remove: (key: number) => void;
+    cancel: (key: number) => void;
+    toggle: (key: number) => void;
 }
 
 export default defineComponent({
@@ -91,19 +91,19 @@ export default defineComponent({
     setup(props, { emit }): TableFormSetupData {
 
         const { modelValue,courseId } = toRefs(props);
-        console.info("传过来modelValue:",modelValue.value)
+        console.info("传过来modelValue:",modelValue.value.length)
 
         const TableData = ref<TableFormDataType[]>(props.modelValue);
         const TableLoading = ref<boolean>(false);
 
         // 新增内容
-        const newIndex = ref<number>(0);
+        const newIndex = ref<number>(modelValue.value.length);
         const newTableData = () => {
 
             const newData = TableData.value.map(item => ({ ...item }));
 
             newData.push({
-                key: `NEW_TEMP_ID_${newIndex.value}`,
+                id: newIndex.value,
                 value: '',
                 name: '',
                 edit: true,
@@ -118,14 +118,14 @@ export default defineComponent({
         // 添加、保存
         const saveRow = (record: TableFormDataType) => {
             TableLoading.value = true;
-            const { key, name, value } = record
+            const { id, name, value } = record
             if (!name || !value) {
                 TableLoading.value = false;
                 ElMessage.error('请填写完整环境信息。')
                 return
             }
 
-            const target: any = TableData.value.find(item => item.key === key);
+            const target: any = TableData.value.find(item => item.id === id);
             if (target) {
                 target.edit = false;
                 target.isNew = false;
@@ -139,15 +139,15 @@ export default defineComponent({
         }
 
         // 删除
-        const remove = (key: string) => {
-            const newData = TableData.value.filter(item => item.key !== key);
+        const remove = (key: number) => {
+            const newData = TableData.value.filter(item => item.id !== key);
             TableData.value = newData;
             emit('update:modelValue', newData);
         }
 
         // 取消编辑
-        const cancel = (key: string) => {
-            const target: any = TableData.value.find(item => item.key === key);
+        const cancel = (key: number) => {
+            const target: any = TableData.value.find(item => item.id === key);
             if(target) {
                 Object.keys(target).forEach(key => { target[key] = target._originalData[key] });
                 target._originalData = undefined;
@@ -155,8 +155,8 @@ export default defineComponent({
         }
 
         // 编辑显示
-        const toggle = (key: string) => {
-            const target: any = TableData.value.find(item => item.key === key);
+        const toggle = (key: number) => {
+            const target: any = TableData.value.find(item => item.id === key);
             target._originalData = { ...target };
             target.edit = !target.edit;
         }

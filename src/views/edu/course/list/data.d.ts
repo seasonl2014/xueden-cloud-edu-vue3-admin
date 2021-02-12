@@ -12,7 +12,7 @@ export interface PaginationConfig {
 }
 
 export interface TableFormDataType {
-  key: string;
+  id: number;
   name?: string;
   value?: string;
   edit?: boolean;

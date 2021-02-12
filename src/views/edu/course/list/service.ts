@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import {TableListQueryParams, TableListItem, updateStatusParams} from './data.d';
+import {TableListQueryParams, TableListItem, UpdateStatusParams} from './data.d';
 
 // 查询课程列表数据
 export async function queryList(params?: TableListQueryParams): Promise<any> {
@@ -52,7 +52,7 @@ export async function getUploadPercentData(fileKey: string): Promise<any> {
 }
 
 // 更新课程状态
-export async function updateStatusData(params: updateStatusParams): Promise<any> {
+export async function updateStatusData(params: UpdateStatusParams): Promise<any> {
   return request({
     url: `/edu/course/updateStatus/${params.id}`,
     method: 'PUT',
