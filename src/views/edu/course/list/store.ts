@@ -12,6 +12,7 @@ import {
     getUploadPercentData,
     updateStatusData,
     downloadTableData,
+    syncTableData,
 } from './service';
 
 
@@ -29,6 +30,7 @@ export interface ModuleType extends StoreModuleType<StateType> {
     actions: {
         queryTableData: Action<StateType, StateType>;
         deleteTableData: Action<StateType, StateType>;
+        syncTableData: Action<StateType, StateType>;
         createTableData: Action<StateType, StateType>;
         queryUpdateData: Action<StateType, StateType>;
         updateTableData: Action<StateType, StateType>;
@@ -92,6 +94,15 @@ const StoreModel: ModuleType = {
         async deleteTableData({ commit }, payload: number ) {
             try {
                 await removeData(payload);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        },
+        // 同步课程索引数据
+        async syncTableData({ commit } ) {
+            try {
+                await syncTableData();
                 return true;
             } catch (error) {
                 return false;

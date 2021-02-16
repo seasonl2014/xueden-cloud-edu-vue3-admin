@@ -46,6 +46,7 @@
                 <el-row>
                         <el-col :span="8">
                             <el-button v-permission="'edu:course:add'" type="primary" @click="() => setCreateFormVisible(true)">新增</el-button>
+                            <el-button v-permission="'edu:course:sync'" type="warning" @click="() => syncTableData()">同步索引</el-button>
                         </el-col>
                         <el-col :span="16" class="text-align-right">
                             <el-input v-model="searchVal" style="width:200px;margin-left: 16px;" placeholder="请输入课程标题">
@@ -275,6 +276,7 @@ interface ListCourseTablePageSetupData {
     syllabusSubmit: (values: TableListItem, resetFields: () => void) => Promise<void>;
     deleteLoading: number[];
     deleteTableData:  (id: number) => void;
+    syncTableData: () => void;
     downloadLoading: number[];
     downloadTableData:  (id: number) => void;
     tabVal: string;
@@ -519,6 +521,24 @@ export default defineComponent({
 
         }
 
+      // 同步课程索引数据
+      const syncTableData = () => {
+
+        ElMessageBox.confirm('确定同步索引吗？', '温馨提示',{
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }).then(async () => {
+          const res: boolean = await store.dispatch('ListCourseTable/syncTableData');
+          if (res === true) {
+            ElMessage.success('同步成功！');
+          }
+        }).catch((error: any) =>{
+          console.log(error)
+        });
+
+      }
+
       // 下载 loading
       const downloadLoading = ref<number[]>([]);
       // 下载
@@ -681,6 +701,7 @@ export default defineComponent({
             updateRemarksSubmit,
             deleteLoading: deleteLoading as unknown as number[],
             deleteTableData,
+            syncTableData,
             downloadLoading: downloadLoading as unknown as number[],
             downloadTableData,
             tabVal: tabVal as unknown as string,

@@ -68,3 +68,11 @@ export async function downloadTableData(id: number): Promise<any> {
     method: 'get'
   });
 }
+
+// 同步课程索引
+export async function syncTableData(): Promise<any>{
+  return request({
+    url: `/edu/course/syncall`,
+    method: 'get'
+  });
+}
