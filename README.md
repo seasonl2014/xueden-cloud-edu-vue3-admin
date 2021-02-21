@@ -1,8 +1,20 @@
 # 基于Vue3.x+TypeScript +Element Plus整合开发的在线教育平台后台管理系统（后台前端源码） 
 
-> 视频教程 , **[墨鱼课堂](http://java.goodym.cn/html/1610442125958.html)** 。
+> 后台预览地址 , **[http://cms.xueden.cn/](http://cms.xueden.cn/)** 。
+>
+> 测试账号：test02
+>
+> 测试密码：123456
+>
+> 前台预览地址： **[http://www.xueden.cn/](http://www.xueden.cn/)** 。
 >
 > QQ群交流：601212472
+
+
+
+## 后端源码地址
+
+**[https://github.com/seasonl2014/xueden-cloud-edu](https://github.com/seasonl2014/xueden-cloud-edu)**
 
 
 
