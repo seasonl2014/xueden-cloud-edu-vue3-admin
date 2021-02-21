@@ -54,7 +54,7 @@ const errorHandler = (error: any) => {
                 message: customCodeMessage[code] || msg || message || 'Error',
             });
 
-            if (code === 10002|| code === 500) {
+            if (code === 10002) {
                 router.replace('/user/login');
 
             }

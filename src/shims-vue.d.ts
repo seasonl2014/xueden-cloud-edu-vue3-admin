@@ -6,3 +6,7 @@ declare module '*.vue' {
 
 declare module '@ckeditor/ckeditor5-vue';
 declare module '@ckeditor/ckeditor5-build-decoupled-document';
+
+interface Window {
+  Aliplayer: any;
+}

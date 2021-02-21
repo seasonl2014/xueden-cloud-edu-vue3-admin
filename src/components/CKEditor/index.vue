@@ -1,7 +1,7 @@
 <template>
     <div class="document-editor">
         <ckeditor :editor="DecoupledEditor" v-model="editorData" :config="{toolbar: toolbars, language:language}"  @ready="onReady"></ckeditor>
-    </div>  
+    </div>
 </template>
 <script lang="ts">
 import { computed, defineComponent, PropType } from "vue";
@@ -109,14 +109,16 @@ export default defineComponent({
                                 return new Promise((resolve, reject) => {
                                     request({
                                         headers: { 'Content-Type': 'multipart/form-data' },
-                                        url: '/uploads',
+                                        url: '/edu/oss/upload',
                                         method: 'POST',
                                         data: param,
                                     })
                                     .then(res => {
+                                      //console.info("编辑器上传图片返回信息res：",res)
                                         const { data } = res;
+                                        //console.info("上传图片返回信息data：",data)
                                         resolve({
-                                            default: data.url || '',
+                                            default: data.urlPath || '',
                                         });
                                     })
                                     .catch(err => {
@@ -129,7 +131,7 @@ export default defineComponent({
                             /* return await loader.file.then((f: any) => {
                                                 console.log("file:", f);
                                                 const F = new FileReader();
-                                                F.readAsArrayBuffer(f);                               
+                                                F.readAsArrayBuffer(f);
                                                 return new Promise(resolve => {
                                                     F.onload = function () {
                                                         resolve({bufAsArray: F.result, file: f});
