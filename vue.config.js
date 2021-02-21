@@ -4,7 +4,7 @@ const mockServer = require('./src/utils/mock/server');
 const { NODE_ENV, VUE_APP_PORT, VUE_APP_MOCK } = process.env;
 module.exports = {
     publicPath: './',
-    outputDir: 'xueden-cloud-vue3',
+    outputDir: 'xueden-cloud-edu-admin',
     lintOnSave: NODE_ENV === 'development',
     productionSourceMap: false,
     devServer: {
