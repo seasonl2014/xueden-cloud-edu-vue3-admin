@@ -62,14 +62,14 @@ const StoreModel: ModuleType = {
         async queryTableData({ commit }, payload: TableListQueryParams ) {
             try {
                 const response: ResponseData = await queryList(payload);
-                const { data } = response;
+                const { data,count } = response;
                 commit('setTableData',{
                     ...initState.tableData,
                     list: data || [],
                     pagination: {
                       ...initState.tableData.pagination,
                       current: payload.page,
-                      total: data.total || 0,
+                      total: count || 0,
                     },
                 });
                 return true;

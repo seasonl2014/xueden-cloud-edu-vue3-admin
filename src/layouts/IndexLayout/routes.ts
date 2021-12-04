@@ -23,6 +23,12 @@ const IndexLayoutRoutes: Array<RoutesDataItem> = [
         component: ()=> import('@/views/home/components/MapChartCard/index.vue')
       },
       {
+        icon: 'map',
+        title: '编辑器测试',
+        path: 'edit',
+        component: ()=> import('@/views/component/editor/ckeditor/index.vue')
+      },
+      {
         icon: 'video',
         title: 'index-layout.menu.home.video',
         path: 'http://java.goodym.cn/html/1610442125958.html',

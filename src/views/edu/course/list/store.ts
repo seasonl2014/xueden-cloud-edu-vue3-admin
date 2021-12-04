@@ -122,12 +122,6 @@ const StoreModel: ModuleType = {
             try {
                 const response: ResponseData = await detailData(payload);
                 const { data } = response;
-
-
-
-                /*console.info("封装后的角色数据：",roleList)
-                console.info("获取课程所具有的角色数据：",data.roleIds)*/
-
                 commit('setUpdateData',{
                     ...initState.updateData,
                     ...data

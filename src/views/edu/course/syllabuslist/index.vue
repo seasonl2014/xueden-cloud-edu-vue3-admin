@@ -523,7 +523,7 @@ export default defineComponent({
         detailBatchUploadLoading.value = [id];
         const res: boolean = await store.dispatch('ListChapterTable/queryUpdateData',id);
         console.info("批量上传小节视频返回值res:",res)
-        if(res===true) {
+        if(res) {
           setBatchUploadVideoFormVisible(true);
         }
         detailBatchUploadLoading.value = [];
