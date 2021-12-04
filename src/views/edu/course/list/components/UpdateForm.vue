@@ -246,6 +246,7 @@ export default defineComponent({
             teacherId: props.values.teacherId || 0,
             subjectId: props.values.subjectId || 0,
             remarks: props.values.remarks || '',
+            courseDesc: props.values.courseDesc || '',
         });
         pKeys.value = [props.values.subjectParentId,props.values.subjectId]
 

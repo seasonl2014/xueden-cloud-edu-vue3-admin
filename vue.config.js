@@ -3,8 +3,9 @@ const bodyParser = require('body-parser')
 const mockServer = require('./src/utils/mock/server');
 const { NODE_ENV, VUE_APP_PORT, VUE_APP_MOCK } = process.env;
 module.exports = {
-    publicPath: './',
+    publicPath: '/',
     outputDir: 'xueden-cloud-edu-admin',
+    assetsDir: 'edu-admin',
     lintOnSave: NODE_ENV === 'development',
     productionSourceMap: false,
     devServer: {

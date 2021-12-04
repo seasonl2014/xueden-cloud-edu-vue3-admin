@@ -1,15 +1,17 @@
 <template>
     <div class="document-editor">
-        <ckeditor :editor="DecoupledEditor" v-model="editorData" :config="{toolbar: toolbars, language:language}"  @ready="onReady"></ckeditor>
+        <!--<ckeditor :editor="DecoupledEditor" v-model="editorData"  :config="{toolbar: toolbars, language:language}"  @ready="onReady"></ckeditor>-->
+      <ckeditor :editor="ClassicEditor" v-model="editorData" :config="{toolbar: toolbars, language:language}"  @ready="onReady"></ckeditor>
     </div>
 </template>
 <script lang="ts">
 import { computed, defineComponent, PropType } from "vue";
 import request from '@/utils/request';
 import CKEditor from '@ckeditor/ckeditor5-vue';
-import DecoupledEditor from '@ckeditor/ckeditor5-build-decoupled-document';
-import '@ckeditor/ckeditor5-build-decoupled-document/build/translations/zh-cn';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn';
 import { getLocale } from "@/utils/i18n";
+
 
 const languageLabels: {[key: string]: string} = {
   'zh-CN': 'zh-cn',
@@ -18,6 +20,38 @@ const languageLabels: {[key: string]: string} = {
 };
 
 const CKEditorConfig = {
+  image: {
+    // Configure the available styles.
+    styles: [
+      'alignLeft', 'alignCenter', 'alignRight'
+    ],
+
+    // Configure the available image resize options.
+    resizeOptions: [
+      {
+        name: 'resizeImage:original',
+        label: 'Original',
+        value: null
+      },
+      {
+        name: 'resizeImage:50',
+        label: '50%',
+        value: '50'
+      },
+      {
+        name: 'resizeImage:75',
+        label: '75%',
+        value: '75'
+      }
+    ],
+    toolbar: [
+      'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight',
+      '|',
+      'resizeImage',
+      '|',
+      'imageTextAlternative'
+    ]
+  },
   toolbar: [
     'heading',
     '|',
@@ -42,6 +76,10 @@ const CKEditorConfig = {
     'link',
     'blockquote',
     'imageUpload',
+    'imageStyle:full',
+    'imageStyle:side',  //图片与上下文组合方式：图片在文字的旁边
+    'resizeImage',
+    'linkImage',
     'insertTable',
     'mediaEmbed',
     '|',
@@ -53,9 +91,10 @@ const CKEditorConfig = {
 };
 
 interface CKEditorSetupData {
-    DecoupledEditor: any;
     language: string;
     editorData: string;
+    ClassicEditor: any;
+    editorConfig: object;
     onReady:  (editor: any) => void;
 }
 
@@ -84,76 +123,58 @@ export default defineComponent({
             }
         });
 
-        // 加载完成
-        const onReady = (editor: any) => {
-                // console.log( 'Editor is ready to use!', editor );
-                editor.ui
-                .getEditableElement()
-                .parentElement.insertBefore(
-                    editor.ui.view.toolbar.element,
-                    editor.ui.getEditableElement(),
-                );
+      // 加载完成
+      const onReady = (editor: any) => {
+        // console.log( 'Editor is ready to use!', editor );
+        editor.ui
+            .getEditableElement()
+            .parentElement.insertBefore(
+            editor.ui.view.toolbar.element,
+            editor.ui.getEditableElement(),
+        );
+        editor.plugins.get('FileRepository').createUploadAdapter = (
+            loader: any,
+        ) => {
+          //let val = editor.getData();
+          return {
+            upload: async () => {
+              return await loader.file.then((f: any) => {
+                // console.log("file:", f);
 
-                editor.plugins.get('FileRepository').createUploadAdapter = (
-                    loader: any,
-                ) => {
-                    //let val = editor.getData();
-                    return {
-                        upload: async () => {
-                            return await loader.file.then((f: any) => {
-                                // console.log("file:", f);
+                const param = new FormData();
+                param.append('file', f);
 
-                                const param = new FormData();
-                                param.append('file', f);
-
-                                return new Promise((resolve, reject) => {
-                                    request({
-                                        headers: { 'Content-Type': 'multipart/form-data' },
-                                        url: '/edu/oss/upload',
-                                        method: 'POST',
-                                        data: param,
-                                    })
-                                    .then(res => {
-                                      //console.info("编辑器上传图片返回信息res：",res)
-                                        const { data } = res;
-                                        //console.info("上传图片返回信息data：",data)
-                                        resolve({
-                                            default: data.urlPath || '',
-                                        });
-                                    })
-                                    .catch(err => {
-                                        console.log(err);
-                                        reject(err);
-                                    });
-                                });
-                            });
-
-                            /* return await loader.file.then((f: any) => {
-                                                console.log("file:", f);
-                                                const F = new FileReader();
-                                                F.readAsArrayBuffer(f);
-                                                return new Promise(resolve => {
-                                                    F.onload = function () {
-                                                        resolve({bufAsArray: F.result, file: f});
-                                                    };
-                                                });
-                                            }).then((v: any) => {
-                                                // 执行上传 Ajax
-                                                console.log("执行上传 ajax", v);
-                                                //返回标准格式
-                                                return {
-                                                    default: 'http://img/BG.png'
-                                                }
-                                            }); */
-                        },
-                    };
-                };
-        }
+                return new Promise((resolve, reject) => {
+                  request({
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    url: '/edu/oss/upload',
+                    method: 'POST',
+                    data: param,
+                  })
+                      .then(res => {
+                        //console.info("编辑器上传图片返回信息res：",res)
+                        const { data } = res;
+                        //console.info("上传图片返回信息data：",data)
+                        resolve({
+                          default: data.urlPath || '',
+                        });
+                      })
+                      .catch(err => {
+                        console.log(err);
+                        reject(err);
+                      });
+                });
+              });
+            },
+          };
+        };
+      }
 
         return {
-            DecoupledEditor,
+            ClassicEditor,
             language: CKEditorConfig.language,
             editorData: editorData as unknown as string,
+            editorConfig:CKEditorConfig.toolbar,
             onReady
         }
     }
